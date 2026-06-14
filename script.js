@@ -209,4 +209,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     renderList();
+
+    // --- PWA: REGISTRASI SERVICE WORKER ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then((registration) => {
+                    console.log('ServiceWorker sukses didaftarkan dengan scope: ', registration.scope);
+                })
+                .catch((error) => {
+                    console.log('ServiceWorker gagal didaftarkan: ', error);
+                });
+        });
+    }
 });

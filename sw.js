@@ -1,4 +1,4 @@
-const CACHE_NAME = 'grocify-v1';
+const CACHE_NAME = 'grocify-v2';
 const urlsToCache = [
     './',
     './index.html',

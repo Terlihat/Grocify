@@ -4,15 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Grocify - Smart Grocery</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="app-container">
         <header>
-            <h1><i class="fa-solid fa-basket-shopping"></i> Grocify</h1>
-            <p>Daftar Belanja Cerdas & Cepat</p>
+            <div class="header-top">
+                <h1><i class="fa-solid fa-basket-shopping"></i> Grocify</h1>
+                <p>Daftar Belanja Cerdas & Cepat</p>
+            </div>
+            
+            <div class="total-summary">
+                <div class="summary-card">
+                    <span class="summary-label">Total Anggaran</span>
+                    <span id="total-price" class="summary-value">Rp 0</span>
+                </div>
+                <div class="summary-card accent">
+                    <span class="summary-label">Sudah Dibeli</span>
+                    <span id="completed-price" class="summary-value">Rp 0</span>
+                </div>
+            </div>
         </header>
 
         <div class="action-bar">
@@ -30,7 +44,23 @@
         </main>
 
         <div class="input-area">
-            <input type="text" id="item-input" placeholder="Tambah barang..." autocomplete="off">
+            <div class="input-wrapper">
+                <select id="category-select">
+                    <option value="Umum">📦 Umum</option>
+                    <option value="Sayuran & Buah">🥬 Sayuran & Buah</option>
+                    <option value="Daging & Ikan">🥩 Daging & Ikan</option>
+                    <option value="Bumbu Dapur">🧂 Bumbu Dapur</option>
+                    <option value="Minuman">🥤 Minuman</option>
+                    <option value="Kebersihan">🧼 Kebersihan</option>
+                </select>
+                
+                <div id="suggestions-container" class="suggestions-container"></div>
+                
+                <div class="input-row">
+                    <input type="text" id="item-input" placeholder="Nama barang..." autocomplete="off">
+                    <input type="number" id="price-input" placeholder="Harga (Rp)..." autocomplete="off" inputmode="numeric">
+                </div>
+            </div>
             <button id="add-btn"><i class="fa-solid fa-plus"></i></button>
         </div>
     </div>

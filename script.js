@@ -9,10 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalPriceEl = document.getElementById('total-price');
     const completedPriceEl = document.getElementById('completed-price');
     const suggestionsContainer = document.getElementById('suggestions-container');
+    const mainScroll = document.getElementById('main-scroll'); // Mengambil elemen main untuk scroll
 
     const categories = ["Umum", "Sayuran & Buah", "Daging & Ikan", "Bumbu Dapur", "Minuman", "Kebersihan"];
 
-    // Mengambil data utama & riwayat pencarian dari Local Storage
     let items = JSON.parse(localStorage.getItem('grocify_data')) || [];
     let itemHistory = JSON.parse(localStorage.getItem('grocify_history')) || [];
 
@@ -20,12 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('grocify_data', JSON.stringify(items));
     };
 
-    // Fungsi menyimpan riwayat barang (Hanya jika belum ada di riwayat)
     const saveToHistory = (text) => {
         const cleanText = text.trim();
-        // Cek agar tidak menduplikasi data yang sudah ada (tidak peduli huruf besar/kecil)
         const isExist = itemHistory.some(h => h.toLowerCase() === cleanText.toLowerCase());
-        
         if (!isExist && cleanText !== '') {
             itemHistory.push(cleanText);
             localStorage.setItem('grocify_history', JSON.stringify(itemHistory));
@@ -106,13 +103,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (text !== '') {
             items.push({ text: text, completed: false, category: category, price: price });
             saveToLocalStorage();
-            saveToHistory(text); // Simpan ke dalam riwayat memori
+            saveToHistory(text); 
             renderList();
             
             itemInput.value = ''; 
             priceInput.value = ''; 
-            suggestionsContainer.innerHTML = ''; // Hilangkan chip setelah sukses
+            suggestionsContainer.innerHTML = ''; 
             itemInput.focus(); 
+
+            // FIX BUG 4: Auto-scroll ke bawah setiap kali barang ditambahkan
+            setTimeout(() => {
+                mainScroll.scrollTop = mainScroll.scrollHeight;
+            }, 50);
         }
     };
 
@@ -172,27 +174,24 @@ document.addEventListener('DOMContentLoaded', () => {
         window.open(waUrl, '_blank');
     });
 
-    // --- FITUR BARU: Event Listener untuk Auto-Suggestion ---
     itemInput.addEventListener('input', (e) => {
         const val = e.target.value.toLowerCase().trim();
-        suggestionsContainer.innerHTML = ''; // Kosongkan saat mengetik
+        suggestionsContainer.innerHTML = ''; 
         
         if (val.length > 0) {
-            // Cari data history yang mengandung huruf yang diketik
             const matches = itemHistory.filter(item => 
                 item.toLowerCase().includes(val) && item.toLowerCase() !== val
-            ).slice(0, 5); // Tampilkan maksimal 5 saran
+            ).slice(0, 5); 
             
             matches.forEach(match => {
                 const chip = document.createElement('div');
                 chip.className = 'suggestion-chip';
-                chip.textContent = match; // Menampilkan nama barang dari riwayat
+                chip.textContent = match; 
                 
-                // Ketika chip ditekan
                 chip.addEventListener('click', () => {
                     itemInput.value = match;
-                    suggestionsContainer.innerHTML = ''; // Sembunyikan chip
-                    priceInput.focus(); // Arahkan pengguna agar langsung mengisi harga
+                    suggestionsContainer.innerHTML = ''; 
+                    priceInput.focus(); 
                 });
                 
                 suggestionsContainer.appendChild(chip);

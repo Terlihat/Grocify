@@ -9,7 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalPriceEl = document.getElementById('total-price');
     const completedPriceEl = document.getElementById('completed-price');
     const suggestionsContainer = document.getElementById('suggestions-container');
-    const mainScroll = document.getElementById('main-scroll'); // Mengambil elemen main untuk scroll
+    const mainScroll = document.getElementById('main-scroll');
+    const micBtn = document.getElementById('mic-btn');
 
     const categories = ["Umum", "Sayuran & Buah", "Daging & Ikan", "Bumbu Dapur", "Minuman", "Kebersihan"];
 
@@ -111,9 +112,8 @@ document.addEventListener('DOMContentLoaded', () => {
             suggestionsContainer.innerHTML = ''; 
             itemInput.focus(); 
 
-            // FIX BUG 4: Auto-scroll ke bawah setiap kali barang ditambahkan
             setTimeout(() => {
-                mainScroll.scrollTop = mainScroll.scrollHeight;
+                if(mainScroll) mainScroll.scrollTop = mainScroll.scrollHeight;
             }, 50);
         }
     };
@@ -208,18 +208,66 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') addItem();
     });
 
-    renderList();
+    // --- FITUR WEB SPEECH API (INPUT SUARA) ---
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    // --- PWA: REGISTRASI SERVICE WORKER ---
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
-                .then((registration) => {
-                    console.log('ServiceWorker sukses didaftarkan dengan scope: ', registration.scope);
-                })
-                .catch((error) => {
-                    console.log('ServiceWorker gagal didaftarkan: ', error);
-                });
+    if (SpeechRecognition && micBtn) {
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'id-ID'; 
+        recognition.interimResults = false; 
+        recognition.maxAlternatives = 1;
+
+        recognition.onstart = () => {
+            micBtn.classList.add('recording');
+            itemInput.placeholder = "Mendengarkan...";
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            let cleanText = transcript.replace(/\.$/, '');
+            
+            itemInput.value = cleanText;
+            itemInput.placeholder = "Nama barang...";
+            micBtn.classList.remove('recording');
+            
+            priceInput.focus();
+        };
+
+        recognition.onerror = (event) => {
+            console.warn('Kesalahan mikrofon:', event.error);
+            micBtn.classList.remove('recording');
+            itemInput.placeholder = "Nama barang...";
+            
+            if (event.error === 'not-allowed') {
+                alert('Tolong izinkan akses mikrofon di pengaturan browser Anda.');
+            }
+        };
+
+        recognition.onend = () => {
+            micBtn.classList.remove('recording');
+            itemInput.placeholder = "Nama barang...";
+        };
+
+        micBtn.addEventListener('click', () => {
+            recognition.start();
         });
+    } else if (micBtn) {
+        micBtn.style.display = 'none';
+        console.log('Browser Anda tidak mendukung fitur input suara.');
     }
+
+    renderList();
 });
+
+// --- PWA: REGISTRASI SERVICE WORKER ---
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then((registration) => {
+                console.log('ServiceWorker sukses didaftarkan dengan scope: ', registration.scope);
+            })
+            .catch((error) => {
+                console.log('ServiceWorker gagal didaftarkan: ', error);
+            });
+    });
+}

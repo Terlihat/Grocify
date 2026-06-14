@@ -1,0 +1,200 @@
+:root {
+    --bg-color: #121212;
+    --surface-color: #1e1e1e;
+    --primary-color: #00e676; /* Aksen Neon Green Modern */
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+    --danger-color: #ff5252;
+    --border-radius: 16px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background-color: #000; /* Background luar jika diakses via desktop */
+    display: flex;
+    justify-content: center;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Membatasi lebar agar persis ukuran HP meskipun dibuka di Desktop */
+.app-container {
+    width: 100%;
+    max-width: 480px; 
+    background-color: var(--bg-color);
+    position: relative;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 20px rgba(0,230,118,0.05);
+}
+
+header {
+    padding: 24px 20px;
+    background-color: var(--surface-color);
+    border-bottom-left-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    z-index: 10;
+}
+
+header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+header p {
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin-top: 6px;
+}
+
+main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    padding-bottom: 100px; /* Jarak untuk area input di bawah */
+}
+
+#shopping-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.list-item {
+    background-color: var(--surface-color);
+    padding: 16px;
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.list-item.completed .item-text {
+    text-decoration: line-through;
+    color: var(--text-secondary);
+}
+
+.item-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    flex: 1;
+}
+
+.checkbox {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--text-secondary);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: transparent;
+    transition: all 0.2s ease;
+}
+
+.list-item.completed .checkbox {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--bg-color);
+}
+
+.item-text {
+    font-size: 16px;
+    color: var(--text-primary);
+    word-break: break-word;
+    transition: color 0.2s;
+}
+
+.delete-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.delete-btn:hover, .delete-btn:active {
+    color: var(--danger-color);
+    background-color: rgba(255, 82, 82, 0.1);
+}
+
+/* Area input mengambang di bawah (Sticky Bottom) */
+.input-area {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 16px 20px 24px 20px;
+    background: linear-gradient(to top, var(--bg-color) 70%, transparent);
+    display: flex;
+    gap: 12px;
+}
+
+#item-input {
+    flex: 1;
+    padding: 16px 20px;
+    border-radius: 30px;
+    border: 1px solid #333;
+    background-color: var(--surface-color);
+    color: var(--text-primary);
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+#item-input:focus {
+    border-color: var(--primary-color);
+}
+
+#add-btn {
+    background-color: var(--primary-color);
+    color: var(--bg-color);
+    border: none;
+    border-radius: 50%;
+    width: 52px;
+    height: 52px;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 230, 118, 0.4);
+    transition: transform 0.1s, box-shadow 0.2s;
+}
+
+#add-btn:active {
+    transform: scale(0.92);
+    box-shadow: 0 2px 6px rgba(0, 230, 118, 0.4);
+}
+
+/* Scrollbar agar rapi */
+::-webkit-scrollbar {
+    width: 5px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-color);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--surface-color);
+    border-radius: 10px;
+}

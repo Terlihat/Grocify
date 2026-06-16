@@ -13,8 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const categorySelect = document.getElementById('category-select');
     const addBtn = document.getElementById('add-btn');
     const shoppingList = document.getElementById('shopping-list');
-    const clearCompletedBtn = document.getElementById('clear-completed-btn');
-    const shareBtn = document.getElementById('share-btn');
     const totalPriceEl = document.getElementById('total-price');
     const completedPriceEl = document.getElementById('completed-price');
     const suggestionsContainer = document.getElementById('suggestions-container');
@@ -28,16 +26,20 @@ document.addEventListener('DOMContentLoaded', () => {
     let itemHistory = JSON.parse(localStorage.getItem('grocify_history')) || [];
     let currentListId = null;
 
-    // --- Migrasi Data Lama (Jika ada) ---
+    // --- Migrasi Data Lama ---
     const oldData = localStorage.getItem('grocify_data');
     if (oldData && appData.length === 0) {
         appData.push({
             id: Date.now().toString(),
             name: "Daftar Sebelumnya",
-            items: JSON.parse(oldData)
+            items: JSON.parse(oldData).map(item => ({
+                ...item,
+                qty: item.qty || 1,
+                unit: item.unit || 'Pcs'
+            }))
         });
         localStorage.setItem('grocify_app_data', JSON.stringify(appData));
-        localStorage.removeItem('grocify_data'); // Bersihkan data lama
+        localStorage.removeItem('grocify_data');
     }
 
     const saveAppData = () => {
@@ -62,13 +64,13 @@ document.addEventListener('DOMContentLoaded', () => {
         listsContainer.innerHTML = '';
         
         if(appData.length === 0) {
-            listsContainer.innerHTML = `<p style="text-align:center; color: var(--text-secondary); margin-top: 20px;">Belum ada daftar belanja. Buat satu di atas!</p>`;
+            listsContainer.innerHTML = `<p style="text-align:center; color: var(--text-secondary); margin-top: 20px; font-size: 14px;">Belum ada daftar belanja. Buat satu di atas!</p>`;
         }
 
         appData.forEach(list => {
             let totalItems = list.items.length;
             let completedItems = list.items.filter(i => i.completed).length;
-            let totalBudget = list.items.reduce((acc, curr) => acc + (parseInt(curr.price) || 0), 0);
+            let totalBudget = list.items.reduce((acc, curr) => acc + ((parseInt(curr.price) || 0) * (parseInt(curr.qty) || 1)), 0);
 
             const card = document.createElement('div');
             card.className = 'list-card';
@@ -135,9 +137,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const itemsWithIndex = currentList.items.map((item, index) => {
             const itemPrice = parseInt(item.price) || 0;
-            totalAnggaran += itemPrice;
-            if (item.completed) totalDibeli += itemPrice;
-            return { ...item, price: itemPrice, category: item.category || 'Umum', originalIndex: index };
+            const itemQty = parseInt(item.qty) || 1;
+            const subTotal = itemPrice * itemQty;
+            
+            totalAnggaran += subTotal;
+            if (item.completed) totalDibeli += subTotal;
+
+            return { 
+                ...item, 
+                price: itemPrice, 
+                qty: itemQty,
+                category: item.category || 'Umum', 
+                originalIndex: index 
+            };
         });
 
         totalPriceEl.textContent = formatRupiah(totalAnggaran);
@@ -161,20 +173,60 @@ document.addEventListener('DOMContentLoaded', () => {
                 catItems.forEach(item => {
                     const li = document.createElement('li');
                     li.className = `list-item ${item.completed ? 'completed' : ''}`;
+                    
+                    const displayPrice = item.price > 0 ? formatRupiah(item.price * item.qty) : '';
+
                     li.innerHTML = `
                         <div class="item-left" onclick="toggleComplete(${item.originalIndex})">
                             <div class="checkbox"><i class="fa-solid fa-check"></i></div>
                             <div class="item-info">
                                 <span class="item-text">${item.text}</span>
-                                ${item.price > 0 ? `<span class="item-price">${formatRupiah(item.price)}</span>` : ''}
+                                ${displayPrice ? `<span class="item-price">${displayPrice}</span>` : ''}
                             </div>
                         </div>
-                        <button class="delete-btn" onclick="deleteItem(${item.originalIndex})"><i class="fa-solid fa-trash-can"></i></button>
+                        <div class="item-right-controls">
+                            <div class="qty-container">
+                                <button class="qty-btn" onclick="changeQty(${item.originalIndex}, -1)">-</button>
+                                <span class="qty-val">${item.qty}</span>
+                                <button class="qty-btn" onclick="changeQty(${item.originalIndex}, 1)">+</button>
+                            </div>
+                            <select class="unit-select" onchange="changeUnit(${item.originalIndex}, this.value)">
+                                <option value="Pcs" ${item.unit === 'Pcs' ? 'selected' : ''}>pcs</option>
+                                <option value="Kg" ${item.unit === 'Kg' ? 'selected' : ''}>kg</option>
+                                <option value="Gr" ${item.unit === 'Gr' ? 'selected' : ''}>g</option>
+                                <option value="Bks" ${item.unit === 'Bks' ? 'selected' : ''}>bks</option>
+                                <option value="Ltr" ${item.unit === 'Ltr' ? 'selected' : ''}>ltr</option>
+                                <option value="Ktk" ${item.unit === 'Ktk' ? 'selected' : ''}>ktk</option>
+                            </select>
+                            <button class="delete-btn" onclick="deleteItem(${item.originalIndex})"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
                     `;
                     shoppingList.appendChild(li);
                 });
             }
         });
+    };
+
+    window.changeQty = (index, change) => {
+        const currentList = appData.find(l => l.id === currentListId);
+        if(!currentList) return;
+        
+        let currentQty = parseInt(currentList.items[index].qty) || 1;
+        currentQty += change;
+        if(currentQty < 1) currentQty = 1;
+        
+        currentList.items[index].qty = currentQty;
+        saveAppData();
+        renderDetailList();
+    };
+
+    window.changeUnit = (index, value) => {
+        const currentList = appData.find(l => l.id === currentListId);
+        if(!currentList) return;
+        
+        currentList.items[index].unit = value;
+        saveAppData();
+        renderDetailList();
     };
 
     const addItem = () => {
@@ -186,7 +238,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const category = categorySelect.value;
         
         if (text !== '') {
-            currentList.items.push({ text: text, completed: false, category: category, price: price });
+            currentList.items.push({ 
+                text: text, 
+                completed: false, 
+                category: category, 
+                price: price,
+                qty: 1,
+                unit: 'Pcs'
+            });
             saveAppData();
             saveToHistory(text); 
             renderDetailList();
@@ -213,45 +272,6 @@ document.addEventListener('DOMContentLoaded', () => {
         saveAppData();
         renderDetailList();
     };
-
-    clearCompletedBtn.addEventListener('click', () => {
-        const currentList = appData.find(l => l.id === currentListId);
-        currentList.items = currentList.items.filter(item => !item.completed);
-        saveAppData();
-        renderDetailList();
-    });
-
-    shareBtn.addEventListener('click', () => {
-        const currentList = appData.find(l => l.id === currentListId);
-        if (currentList.items.length === 0) { alert('Daftar belanja masih kosong!'); return; }
-
-        let waText = `*Daftar: ${currentList.name}* 🛒\n\n`;
-        let totalAnggaran = 0; let totalDibeli = 0;
-        
-        const itemsWithIndex = currentList.items.map(item => {
-            const itemPrice = parseInt(item.price) || 0;
-            totalAnggaran += itemPrice;
-            if (item.completed) totalDibeli += itemPrice;
-            return { ...item, price: itemPrice, category: item.category || 'Umum' };
-        });
-        
-        categories.forEach(category => {
-            const catItems = itemsWithIndex.filter(item => item.category === category);
-            if (catItems.length > 0) {
-                waText += `*_${category}_*\n`;
-                catItems.forEach((item) => {
-                    const statusIcon = item.completed ? '✅' : '⏳';
-                    const priceText = item.price > 0 ? ` (${formatRupiah(item.price)})` : '';
-                    waText += `- ${item.text}${priceText} ${statusIcon}\n`;
-                });
-                waText += `\n`;
-            }
-        });
-
-        waText += `-----------------------\n*Total Estimasi:* ${formatRupiah(totalAnggaran)}\n*Sudah Dibeli:* ${formatRupiah(totalDibeli)}\n`;
-        const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(waText)}`;
-        window.open(waUrl, '_blank');
-    });
 
     itemInput.addEventListener('input', (e) => {
         const val = e.target.value.toLowerCase().trim();
@@ -283,12 +303,11 @@ document.addEventListener('DOMContentLoaded', () => {
             let cleanText = event.results[0][0].transcript.replace(/\.$/, '');
             itemInput.value = cleanText; itemInput.placeholder = "Nama barang..."; micBtn.classList.remove('recording'); priceInput.focus();
         };
-        recognition.onerror = (event) => { micBtn.classList.remove('recording'); itemInput.placeholder = "Nama barang..."; if (event.error === 'not-allowed') alert('Izinkan mikrofon.'); };
+        recognition.onerror = (event) => { micBtn.classList.remove('recording'); itemInput.placeholder = "Nama barang..."; };
         recognition.onend = () => { micBtn.classList.remove('recording'); itemInput.placeholder = "Nama barang..."; };
         micBtn.addEventListener('click', () => recognition.start());
     } else if (micBtn) { micBtn.style.display = 'none'; }
 
-    // Init App
     renderDashboard();
 });
 

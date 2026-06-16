@@ -51,15 +51,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const categories = ["Umum", "Sayuran & Buah", "Daging & Ikan", "Bumbu Dapur", "Minuman", "Kebersihan"];
 
-    // Map Palet Warna Tema
+    // Map Palet Warna Tema (Dark & Light)
     const themeColors = {
-        default: '#00e676',
-        ocean: '#00b0ff',
-        sapphire: '#2979ff',
-        lavender: '#b400ff',
-        permen: '#ff4081',
-        sunset: '#ff6d00',
-        rosegold: '#e5a9a9'
+        'default': '#00e676',
+        'ocean': '#00b0ff',
+        'sapphire': '#2979ff',
+        'lavender': '#b400ff',
+        'permen': '#ff4081',
+        'sunset': '#ff6d00',
+        'rosegold': '#e5a9a9',
+        // Tema Terang Baru
+        'light-nordic': '#5b7c99',
+        'light-citrus': '#ff9800',
+        'light-cotton': '#f48fb1',
+        'light-mint': '#20b2aa'
     };
 
     // --- State Management ---
@@ -75,7 +80,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.style.setProperty('--primary-color', color);
         localStorage.setItem('grocify_theme', themeName);
         
-        // Perbarui class active di tile visual pengaturan tampilan
+        // Deteksi Light Mode
+        if(themeName.startsWith('light-')) {
+            document.body.classList.add('light-theme');
+        } else {
+            document.body.classList.remove('light-theme');
+        }
+        
+        // Perbarui class active di menu pengaturan tampilan
         document.querySelectorAll('.theme-tile').forEach(tile => {
             if(tile.getAttribute('data-theme') === themeName) {
                 tile.classList.add('active');
@@ -84,6 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     };
+    
     // Jalankan tema yang tersimpan saat loading awal aplikasi
     const savedTheme = localStorage.getItem('grocify_theme') || 'default';
     applyTheme(savedTheme);
@@ -105,7 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- ENGINES: NAVBAR NAVIGATION SWITCHER ---
     const switchTab = (tabName) => {
         currentActiveTab = tabName;
-        // Atur status aktif button di navbar
         navItems.forEach(item => {
             if(item.getAttribute('data-tab') === tabName) {
                 item.classList.add('active');
@@ -114,7 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Toggle visibility halaman tab secara rapi
         dashboardView.style.display = (tabName === 'dashboard') ? 'flex' : 'none';
         memoView.style.display = (tabName === 'memo') ? 'flex' : 'none';
         themeView.style.display = (tabName === 'theme') ? 'flex' : 'none';
@@ -216,7 +227,6 @@ document.addEventListener('DOMContentLoaded', () => {
         searchItemsInput.value = "";
         searchBarContainer.style.display = 'none';
 
-        // Sembunyikan navigasi utama & tampilkan detail barang
         dashboardView.style.display = 'none';
         memoView.style.display = 'none';
         themeView.style.display = 'none';
@@ -224,7 +234,6 @@ document.addEventListener('DOMContentLoaded', () => {
         detailView.style.display = 'flex';
         renderDetailList();
 
-        // INTEGRASI SISTEM ANDROID BACK BUTTON: Dorong state baru ke dalam riwayat window browser
         window.history.pushState({ view: 'detail_page' }, '');
     };
 
@@ -232,11 +241,9 @@ document.addEventListener('DOMContentLoaded', () => {
         currentListId = null;
         detailView.style.display = 'none';
         
-        // Kembalikan tampilan ke tab yang terakhir aktif & munculkan navbar kembali
         switchTab(currentActiveTab);
         mainNavbar.style.display = 'flex';
         
-        // Jika penutupan dipicu tombol "Kembali" manual di layar, kita buang artificial history state-nya
         if (!isPopStateTriggered) {
             window.history.back();
         }
@@ -245,10 +252,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     backBtn.addEventListener('click', () => closeDetailView(false));
 
-    // Menangkap sinyal tombol Back fisik HP Android / Gestur back usap layar tepi hp
     window.addEventListener('popstate', (event) => {
         if (detailView.style.display === 'flex') {
-            closeDetailView(true); // Tutup view detail dengan aman tanpa menutup aplikasi keseluruhan
+            closeDetailView(true);
         }
     });
 
@@ -356,19 +362,17 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <button class="qty-btn" onclick="changeQty(${item.originalIndex}, 1)">+</button>
                             </div>
                             <select class="unit-select" onchange="changeUnit(${item.originalIndex}, this.value)">
-                                <option value="Pcs" ${item.unit === 'Pcs' ? 'selected' : ''}>pcs</option>
-                                <option value="Kg" ${item.unit === 'Kg' ? 'selected' : ''}>kg</option>
-                                <option value="Gr" ${item.unit === 'Gr' ? 'selected' : ''}>g</option>
-                                <option value="Bks" ${item.unit === 'Bks' ? 'selected' : ''}>bks</option>
-                                <option value="Ltr" ${item.unit === 'Ltr' ? 'selected' : ''}>ltr</option>
-                                <option value="Ktk" ${item.unit === 'Ktk' ? 'selected' : ''}>ktk</option>
-                                <option value="Unit" ${item.unit === 'Unit' ? 'selected' : ''}>unit</option>
-                                <option value="Set" ${item.unit === 'Set' ? 'selected' : ''}>set</option>
-                                <option value="Dus" ${item.unit === 'Dus' ? 'selected' : ''}>dus</option>
-                                <option value="Pak" ${item.unit === 'Pak' ? 'selected' : ''}>pak</option>
-                                <option value="Gros" ${item.unit === 'Gros' ? 'selected' : ''}>gros</option>
-                                <option value="Rim" ${item.unit === 'Rim' ? 'selected' : ''}>rim</option>
-                                <option value="Ons" ${item.unit === 'Ons' ? 'selected' : ''}>ons</option>
+                                <option value="Pcs" ${item.unit === 'Pcs' ? 'selected' : ''}>Pcs</option>
+                                <option value="Bks" ${item.unit === 'Bks' ? 'selected' : ''}>Bks</option>
+                                <option value="Pak" ${item.unit === 'Pak' ? 'selected' : ''}>Pak</option>
+                                <option value="Dus" ${item.unit === 'Dus' ? 'selected' : ''}>Dus</option>
+                                <option value="Ktk" ${item.unit === 'Ktk' ? 'selected' : ''}>Ktk</option>
+                                <option value="Set" ${item.unit === 'Set' ? 'selected' : ''}>Set</option>
+                                <option value="Gros" ${item.unit === 'Gros' ? 'selected' : ''}>Gros</option>
+                                <option value="G" ${item.unit === 'G' ? 'selected' : ''}>G</option>
+                                <option value="Kg" ${item.unit === 'Kg' ? 'selected' : ''}>Kg</option>
+                                <option value="Ons" ${item.unit === 'Ons' ? 'selected' : ''}>Ons</option>
+                                <option value="Ltr" ${item.unit === 'Ltr' ? 'selected' : ''}>Ltr</option>
                             </select>
                             <button class="delete-btn" onclick="deleteItem(${item.originalIndex})"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
@@ -436,7 +440,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const openBottomSheet = () => {
         sheetOverlay.classList.add('show');
         bottomSheet.classList.add('show');
-        bottomSheet.style.height = "50vh"; 
+        bottomSheet.style.height = "55vh"; 
     };
 
     const closeBottomSheet = () => {
@@ -479,7 +483,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (currentHeight > window.innerHeight * 0.55) {
             bottomSheet.style.height = "70vh"; 
         } else {
-            bottomSheet.style.height = "50vh"; 
+            bottomSheet.style.height = "55vh"; 
         }
     });
 
@@ -519,7 +523,6 @@ document.addEventListener('DOMContentLoaded', () => {
         shareList(currentListId);
     });
 
-    // MENU BARU: EDIT HARGA MASAL BAGI YANG DICENTANG (COMPLETED)
     optEditCheckedPrice.addEventListener('click', () => {
         closeBottomSheet();
         const currentList = appData.find(l => l.id === currentListId);
@@ -609,7 +612,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderDashboard();
 });
 
-// --- PWA SERVICE WORKER REGISTRATION ---
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').catch((error) => console.log('ServiceWorker gagal:', error));

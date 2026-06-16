@@ -19,28 +19,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const mainScroll = document.getElementById('main-scroll');
     const micBtn = document.getElementById('mic-btn');
 
+    // Bottom Sheet Elements
+    const menuTriggerBtn = document.getElementById('menu-trigger-btn');
+    const sheetOverlay = document.getElementById('sheet-overlay');
+    const bottomSheet = document.getElementById('bottom-sheet');
+    const sheetHeader = document.getElementById('sheet-header');
+    
+    // Bottom Sheet Menu Actions
+    const optSearch = document.getElementById('opt-search');
+    const optRename = document.getElementById('opt-rename');
+    const optShare = document.getElementById('opt-share');
+    const optUncheckAll = document.getElementById('opt-uncheck-all');
+    const optCheckAll = document.getElementById('opt-check-all');
+    const optDeleteAll = document.getElementById('opt-delete-all');
+
+    // Search Bar Elements
+    const searchBarContainer = document.getElementById('search-bar-container');
+    const searchItemsInput = document.getElementById('search-items-input');
+    const closeSearchBtn = document.getElementById('close-search-btn');
+
     const categories = ["Umum", "Sayuran & Buah", "Daging & Ikan", "Bumbu Dapur", "Minuman", "Kebersihan"];
 
     // --- State Management ---
     let appData = JSON.parse(localStorage.getItem('grocify_app_data')) || [];
     let itemHistory = JSON.parse(localStorage.getItem('grocify_history')) || [];
     let currentListId = null;
-
-    // --- Migrasi Data Lama ---
-    const oldData = localStorage.getItem('grocify_data');
-    if (oldData && appData.length === 0) {
-        appData.push({
-            id: Date.now().toString(),
-            name: "Daftar Sebelumnya",
-            items: JSON.parse(oldData).map(item => ({
-                ...item,
-                qty: item.qty || 1,
-                unit: item.unit || 'Pcs'
-            }))
-        });
-        localStorage.setItem('grocify_app_data', JSON.stringify(appData));
-        localStorage.removeItem('grocify_data');
-    }
+    let filterQuery = ""; // Query filter untuk pencarian internal barang
 
     const saveAppData = () => {
         localStorage.setItem('grocify_app_data', JSON.stringify(appData));
@@ -127,6 +131,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentList = appData.find(l => l.id === id);
         currentListTitle.textContent = currentList.name;
         
+        // Reset pencarian saat buka daftar baru
+        filterQuery = "";
+        searchItemsInput.value = "";
+        searchBarContainer.style.display = 'none';
+
         dashboardView.style.display = 'none';
         detailView.style.display = 'flex';
         renderDetailList();
@@ -139,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderDashboard();
     });
 
-    // --- SHARE LOGIC (Global via WA) ---
+    // --- SHARE LOGIC (Bisa dipanggil dari Dashboard & Menu Atas) ---
     window.shareList = (id) => {
         const listToShare = appData.find(l => l.id === id);
         if (!listToShare || listToShare.items.length === 0) { 
@@ -169,7 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 catItems.forEach((item) => {
                     const statusIcon = item.completed ? '✅' : '⏳';
                     const priceText = item.price > 0 ? ` - ${formatRupiah(item.price * item.qty)}` : '';
-                    waText += `- ${item.text} (${item.qty} ${item.unit.toLowerCase()})${priceText} ${statusIcon}\n`;
+                    waText += `- ${item.text} (${item.qty} ${item.unit || 'Pcs'})${priceText} ${statusIcon}\n`;
                 });
                 waText += `\n`;
             }
@@ -189,28 +198,32 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalAnggaran = 0;
         let totalDibeli = 0;
 
-        const itemsWithIndex = currentList.items.map((item, index) => {
-            const itemPrice = parseInt(item.price) || 0;
-            const itemQty = parseInt(item.qty) || 1;
-            const subTotal = itemPrice * itemQty;
-            
+        // Ambil data item + kalkulasi total uang riil (tidak terpengaruh filter cari)
+        currentList.items.forEach(item => {
+            const subTotal = (parseInt(item.price) || 0) * (parseInt(item.qty) || 1);
             totalAnggaran += subTotal;
             if (item.completed) totalDibeli += subTotal;
-
-            return { 
-                ...item, 
-                price: itemPrice, 
-                qty: itemQty,
-                category: item.category || 'Umum', 
-                originalIndex: index 
-            };
         });
 
         totalPriceEl.textContent = formatRupiah(totalAnggaran);
         completedPriceEl.textContent = formatRupiah(totalDibeli);
 
+        // Map item dengan Index Aslinya agar fungsi hapus/centang tidak salah sasaran pas di-filter pencarian
+        const itemsWithIndex = currentList.items.map((item, index) => ({
+            ...item,
+            price: parseInt(item.price) || 0,
+            qty: parseInt(item.qty) || 1,
+            category: item.category || 'Umum',
+            originalIndex: index
+        }));
+
+        // Filter berdasarkan kolom pencarian jika ada isinya
+        const filteredItems = itemsWithIndex.filter(item => 
+            item.text.toLowerCase().includes(filterQuery.toLowerCase())
+        );
+
         categories.forEach(category => {
-            const catItems = itemsWithIndex.filter(item => item.category === category);
+            const catItems = filteredItems.filter(item => item.category === category);
             if (catItems.length > 0) {
                 const header = document.createElement('h3');
                 header.className = 'category-header';
@@ -271,11 +284,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.changeQty = (index, change) => {
         const currentList = appData.find(l => l.id === currentListId);
         if(!currentList) return;
-        
         let currentQty = parseInt(currentList.items[index].qty) || 1;
         currentQty += change;
         if(currentQty < 1) currentQty = 1;
-        
         currentList.items[index].qty = currentQty;
         saveAppData();
         renderDetailList();
@@ -284,7 +295,6 @@ document.addEventListener('DOMContentLoaded', () => {
     window.changeUnit = (index, value) => {
         const currentList = appData.find(l => l.id === currentListId);
         if(!currentList) return;
-        
         currentList.items[index].unit = value;
         saveAppData();
         renderDetailList();
@@ -293,29 +303,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const addItem = () => {
         if(!currentListId) return;
         const currentList = appData.find(l => l.id === currentListId);
-
         const text = itemInput.value.trim();
         const price = parseInt(priceInput.value) || 0; 
         const category = categorySelect.value;
         
         if (text !== '') {
             currentList.items.push({ 
-                text: text, 
-                completed: false, 
-                category: category, 
-                price: price,
-                qty: 1,
-                unit: 'Pcs'
+                text: text, completed: false, category: category, price: price, qty: 1, unit: 'Pcs'
             });
             saveAppData();
             saveToHistory(text); 
             renderDetailList();
             
-            itemInput.value = ''; 
-            priceInput.value = ''; 
-            suggestionsContainer.innerHTML = ''; 
-            itemInput.focus(); 
-
+            itemInput.value = ''; priceInput.value = ''; suggestionsContainer.innerHTML = ''; itemInput.focus(); 
             setTimeout(() => { if(mainScroll) mainScroll.scrollTop = mainScroll.scrollHeight; }, 50);
         }
     };
@@ -334,6 +334,127 @@ document.addEventListener('DOMContentLoaded', () => {
         renderDetailList();
     };
 
+    // --- LOGIKA BOTTOM SHEET (SWIPEABLE/GESER) ---
+    const openBottomSheet = () => {
+        sheetOverlay.classList.add('show');
+        bottomSheet.classList.add('show');
+        bottomSheet.style.height = "50vh"; // Set ke setengah layar default
+    };
+
+    const closeBottomSheet = () => {
+        sheetOverlay.classList.remove('show');
+        bottomSheet.classList.remove('show');
+        bottomSheet.style.height = "";
+    };
+
+    menuTriggerBtn.addEventListener('click', openBottomSheet);
+    sheetOverlay.addEventListener('click', closeBottomSheet);
+
+    // Sistem Geser Sentuh (Touch Events) untuk Bottom Sheet
+    let isDragging = false;
+    let startY, startHeight;
+
+    sheetHeader.addEventListener('touchstart', (e) => {
+        isDragging = true;
+        startY = e.touches[0].pageY;
+        startHeight = bottomSheet.getBoundingClientRect().height;
+    });
+
+    document.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        const deltaY = e.touches[0].pageY - startY; // Positif jika geser bawah, negatif jika atas
+        const newHeight = startHeight - deltaY;
+        const maxHeight = window.innerHeight * 0.70; // Batas geser atas (70% Layar tidak Full)
+
+        if (newHeight <= maxHeight) {
+            bottomSheet.style.height = `${newHeight}px`;
+        }
+    });
+
+    document.addEventListener('touchend', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        const currentHeight = bottomSheet.getBoundingClientRect().height;
+        const halfScreen = window.innerHeight * 0.35;
+
+        if (currentHeight < halfScreen) {
+            closeBottomSheet(); // Tutup jika di-swipe ke bawah jauh
+        } else if (currentHeight > window.innerHeight * 0.55) {
+            bottomSheet.style.height = "70vh"; // Rentangkan sedikit ke atas
+        } else {
+            bottomSheet.style.height = "50vh"; // Kembalikan ke posisi tengah
+        }
+    });
+
+    // --- ACTIONS DI DALAM BOTTOM SHEET MENU ---
+    
+    // 1. Cari di dalam daftar
+    optSearch.addEventListener('click', () => {
+        closeBottomSheet();
+        searchBarContainer.style.display = 'flex';
+        searchItemsInput.focus();
+    });
+
+    searchItemsInput.addEventListener('input', (e) => {
+        filterQuery = e.target.value;
+        renderDetailList();
+    });
+
+    closeSearchBtn.addEventListener('click', () => {
+        filterQuery = "";
+        searchItemsInput.value = "";
+        searchBarContainer.style.display = 'none';
+        renderDetailList();
+    });
+
+    // 2. Ganti Nama Daftar
+    optRename.addEventListener('click', () => {
+        closeBottomSheet();
+        const currentList = appData.find(l => l.id === currentListId);
+        const newName = prompt("Masukkan nama baru untuk daftar ini:", currentList.name);
+        if (newName && newName.trim() !== "") {
+            currentList.name = newName.trim();
+            currentListTitle.textContent = currentList.name;
+            saveAppData();
+        }
+    });
+
+    // 3. Bagikan via WA
+    optShare.addEventListener('click', () => {
+        closeBottomSheet();
+        shareList(currentListId);
+    });
+
+    // 4. Batalkan Centang Semua Item
+    optUncheckAll.addEventListener('click', () => {
+        closeBottomSheet();
+        const currentList = appData.find(l => l.id === currentListId);
+        currentList.items.forEach(item => item.completed = false);
+        saveAppData();
+        renderDetailList();
+    });
+
+    // 5. Centang Semua Item
+    optCheckAll.addEventListener('click', () => {
+        closeBottomSheet();
+        const currentList = appData.find(l => l.id === currentListId);
+        currentList.items.forEach(item => item.completed = true);
+        saveAppData();
+        renderDetailList();
+    });
+
+    // 6. Hapus Semua Item
+    optDeleteAll.addEventListener('click', () => {
+        closeBottomSheet();
+        if(confirm("Apakah Anda yakin ingin menghapus seluruh barang di daftar ini?")) {
+            const currentList = appData.find(l => l.id === currentListId);
+            currentList.items = [];
+            saveAppData();
+            renderDetailList();
+        }
+    });
+
+    // --- SUGGESTIONS & ENTER INPUT LOGIC ---
     itemInput.addEventListener('input', (e) => {
         const val = e.target.value.toLowerCase().trim();
         suggestionsContainer.innerHTML = ''; 
@@ -364,7 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let cleanText = event.results[0][0].transcript.replace(/\.$/, '');
             itemInput.value = cleanText; itemInput.placeholder = "Nama barang..."; micBtn.classList.remove('recording'); priceInput.focus();
         };
-        recognition.onerror = (event) => { micBtn.classList.remove('recording'); itemInput.placeholder = "Nama barang..."; };
+        recognition.onerror = () => { micBtn.classList.remove('recording'); itemInput.placeholder = "Nama barang..."; };
         recognition.onend = () => { micBtn.classList.remove('recording'); itemInput.placeholder = "Nama barang..."; };
         micBtn.addEventListener('click', () => recognition.start());
     } else if (micBtn) { micBtn.style.display = 'none'; }

@@ -34,34 +34,25 @@
         </div>
 
         <div id="detail-view" class="view-section" style="display: none;">
-            <header>
+            <header class="detail-header-compact">
                 <div class="header-top detail-top">
                     <button id="back-btn" class="back-btn"><i class="fa-solid fa-chevron-left"></i> Kembali</button>
                     <h1 id="current-list-title">Nama Daftar</h1>
                 </div>
                 
-                <div class="total-summary">
-                    <div class="summary-card">
+                <div class="total-summary-compact">
+                    <div class="summary-card-compact">
                         <span class="summary-label">Total Anggaran</span>
                         <span id="total-price" class="summary-value">Rp 0</span>
                     </div>
-                    <div class="summary-card accent">
+                    <div class="summary-card-compact accent">
                         <span class="summary-label">Sudah Dibeli</span>
                         <span id="completed-price" class="summary-value">Rp 0</span>
                     </div>
                 </div>
             </header>
 
-            <div class="action-bar">
-                <button id="clear-completed-btn" class="action-btn">
-                    <i class="fa-solid fa-broom"></i> Bersihkan
-                </button>
-                <button id="share-btn" class="action-btn">
-                    <i class="fa-brands fa-whatsapp"></i> Bagikan
-                </button>
-            </div>
-
-            <main id="main-scroll">
+            <main id="main-scroll" class="detail-main-compact">
                 <ul id="shopping-list">
                     </ul>
             </main>

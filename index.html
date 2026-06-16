@@ -17,7 +17,7 @@
 <body>
     <div class="app-container">
         
-        <div id="dashboard-view" class="view-section">
+        <div id="dashboard-view" class="view-section active-tab-view">
             <header class="dashboard-header">
                 <div class="header-top">
                     <h1><i class="fa-solid fa-basket-shopping"></i> Grocify</h1>
@@ -33,7 +33,53 @@
                 </main>
         </div>
 
-        <div id="detail-view" class="view-section" style="display: none;">
+        <div id="memo-view" class="view-section" style="display: none;">
+            <header class="dashboard-header">
+                <div class="header-top">
+                    <h1><i class="fa-solid fa-note-sticky"></i> Memo Belanja</h1>
+                    <p>Catatan cepat, otomatis tersimpan langsung</p>
+                </div>
+            </header>
+            <main class="memo-main">
+                <textarea id="memo-textarea" placeholder="Tulis catatan random di sini... (Cth: Titipan tetangga, resep masakan, nomor telepon kurir, dll)"></textarea>
+            </main>
+        </div>
+
+        <div id="theme-view" class="view-section" style="display: none;">
+            <header class="dashboard-header">
+                <div class="header-top">
+                    <h1><i class="fa-solid fa-palette"></i> Tema Aplikasi</h1>
+                    <p>Pilih nuansa warna yang Anda sukai</p>
+                </div>
+            </header>
+            <main class="theme-main">
+                <div class="theme-grid">
+                    <button class="theme-tile active" data-theme="default">
+                        <span class="theme-dot" style="background-color: #00e676;"></span> Default
+                    </button>
+                    <button class="theme-tile" data-theme="ocean">
+                        <span class="theme-dot" style="background-color: #00b0ff;"></span> Ocean
+                    </button>
+                    <button class="theme-tile" data-theme="sapphire">
+                        <span class="theme-dot" style="background-color: #2979ff;"></span> Sapphire
+                    </button>
+                    <button class="theme-tile" data-theme="lavender">
+                        <span class="theme-dot" style="background-color: #b400ff;"></span> Lavender
+                    </button>
+                    <button class="theme-tile" data-theme="permen">
+                        <span class="theme-dot" style="background-color: #ff4081;"></span> Permen
+                    </button>
+                    <button class="theme-tile" data-theme="sunset">
+                        <span class="theme-dot" style="background-color: #ff6d00;"></span> Sunset
+                    </button>
+                    <button class="theme-tile" data-theme="rosegold">
+                        <span class="theme-dot" style="background-color: #e5a9a9;"></span> Rose Gold
+                    </button>
+                </div>
+            </main>
+        </div>
+
+        <div id="detail-view" class="view-section" style="display: none; z-index: 20;">
             <header class="detail-header-compact">
                 <div class="header-top detail-top">
                     <button id="back-btn" class="back-btn"><i class="fa-solid fa-chevron-left"></i> Kembali</button>
@@ -93,6 +139,21 @@
             </div>
         </div>
 
+        <nav id="main-navbar" class="main-navbar">
+            <button class="nav-item active" data-tab="dashboard">
+                <i class="fa-solid fa-basket-shopping"></i>
+                <span>Daftar</span>
+            </button>
+            <button class="nav-item" data-tab="memo">
+                <i class="fa-solid fa-note-sticky"></i>
+                <span>Memo</span>
+            </button>
+            <button class="nav-item" data-tab="theme">
+                <i class="fa-solid fa-palette"></i>
+                <span>Tampilan</span>
+            </button>
+        </nav>
+
         <div id="sheet-overlay" class="sheet-overlay"></div>
         <div id="bottom-sheet" class="bottom-sheet">
             <div class="sheet-header" id="sheet-header">
@@ -107,6 +168,9 @@
                 </button>
                 <button class="sheet-item" id="opt-share">
                     <i class="fa-brands fa-whatsapp"></i> Bagikan daftar via WA
+                </button>
+                <button class="sheet-item" id="opt-edit-checked-price">
+                    <i class="fa-solid fa-tags"></i> Edit harga item dicentang
                 </button>
                 <button class="sheet-item" id="opt-uncheck-all">
                     <i class="fa-regular fa-square"></i> Batalkan centang semua item

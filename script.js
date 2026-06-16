@@ -59,6 +59,15 @@ document.addEventListener('DOMContentLoaded', () => {
         return 'Rp ' + new Intl.NumberFormat('id-ID').format(num);
     };
 
+    // Format Tanggal: DD-MM-YY (31-06-26)
+    const formatDate = (timestamp) => {
+        const d = new Date(parseInt(timestamp));
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = String(d.getFullYear()).slice(-2);
+        return `${day}-${month}-${year}`;
+    };
+
     // --- DASHBOARD LOGIC ---
     const renderDashboard = () => {
         listsContainer.innerHTML = '';
@@ -76,7 +85,10 @@ document.addEventListener('DOMContentLoaded', () => {
             card.className = 'list-card';
             card.innerHTML = `
                 <div class="list-card-header">
-                    <span class="list-card-title">${list.name}</span>
+                    <div class="list-card-title-area">
+                        <span class="list-card-title">${list.name}</span>
+                        <span class="list-card-date"><i class="fa-regular fa-calendar-days"></i> ${formatDate(list.id)}</span>
+                    </div>
                 </div>
                 <div class="list-card-stats">
                     <div class="stat-item"><i class="fa-solid fa-box"></i> ${completedItems}/${totalItems} Selesai</div>
@@ -84,7 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="list-card-actions">
                     <button class="btn-open" onclick="openList('${list.id}')">Buka Daftar</button>
-                    <button class="btn-delete-list" onclick="deleteList('${list.id}')"><i class="fa-solid fa-trash-can"></i></button>
+                    <button class="btn-share-list" onclick="shareList('${list.id}')" aria-label="Bagikan"><i class="fa-brands fa-whatsapp"></i></button>
+                    <button class="btn-delete-list" onclick="deleteList('${list.id}')" aria-label="Hapus"><i class="fa-solid fa-trash-can"></i></button>
                 </div>
             `;
             listsContainer.appendChild(card);
@@ -125,6 +138,47 @@ document.addEventListener('DOMContentLoaded', () => {
         dashboardView.style.display = 'flex';
         renderDashboard();
     });
+
+    // --- SHARE LOGIC (Global via WA) ---
+    window.shareList = (id) => {
+        const listToShare = appData.find(l => l.id === id);
+        if (!listToShare || listToShare.items.length === 0) { 
+            alert('Daftar belanja masih kosong!'); 
+            return; 
+        }
+
+        let waText = `*Daftar: ${listToShare.name}* 🛒\n_Dibuat: ${formatDate(listToShare.id)}_\n\n`;
+        let totalAnggaran = 0;
+        let totalDibeli = 0;
+        
+        const itemsWithIndex = listToShare.items.map(item => {
+            const itemPrice = parseInt(item.price) || 0;
+            const itemQty = parseInt(item.qty) || 1;
+            const subTotal = itemPrice * itemQty;
+            
+            totalAnggaran += subTotal;
+            if (item.completed) totalDibeli += subTotal;
+            
+            return { ...item, price: itemPrice, qty: itemQty, category: item.category || 'Umum' };
+        });
+        
+        categories.forEach(category => {
+            const catItems = itemsWithIndex.filter(item => item.category === category);
+            if (catItems.length > 0) {
+                waText += `*_${category}_*\n`;
+                catItems.forEach((item) => {
+                    const statusIcon = item.completed ? '✅' : '⏳';
+                    const priceText = item.price > 0 ? ` - ${formatRupiah(item.price * item.qty)}` : '';
+                    waText += `- ${item.text} (${item.qty} ${item.unit.toLowerCase()})${priceText} ${statusIcon}\n`;
+                });
+                waText += `\n`;
+            }
+        });
+
+        waText += `-----------------------\n*Total Estimasi:* ${formatRupiah(totalAnggaran)}\n*Sudah Dibeli:* ${formatRupiah(totalDibeli)}\n`;
+        const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(waText)}`;
+        window.open(waUrl, '_blank');
+    };
 
     // --- DETAIL LIST LOGIC ---
     const renderDetailList = () => {
@@ -197,6 +251,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <option value="Bks" ${item.unit === 'Bks' ? 'selected' : ''}>bks</option>
                                 <option value="Ltr" ${item.unit === 'Ltr' ? 'selected' : ''}>ltr</option>
                                 <option value="Ktk" ${item.unit === 'Ktk' ? 'selected' : ''}>ktk</option>
+                                <option value="Unit" ${item.unit === 'Unit' ? 'selected' : ''}>unit</option>
+                                <option value="Set" ${item.unit === 'Set' ? 'selected' : ''}>set</option>
+                                <option value="Dus" ${item.unit === 'Dus' ? 'selected' : ''}>dus</option>
+                                <option value="Pak" ${item.unit === 'Pak' ? 'selected' : ''}>pak</option>
+                                <option value="Gros" ${item.unit === 'Gros' ? 'selected' : ''}>gros</option>
+                                <option value="Rim" ${item.unit === 'Rim' ? 'selected' : ''}>rim</option>
+                                <option value="Ons" ${item.unit === 'Ons' ? 'selected' : ''}>ons</option>
                             </select>
                             <button class="delete-btn" onclick="deleteItem(${item.originalIndex})"><i class="fa-solid fa-trash-can"></i></button>
                         </div>

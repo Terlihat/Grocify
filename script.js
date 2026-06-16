@@ -110,18 +110,14 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('grocify_memo', e.target.value);
     });
 
-    // --- ENGINES: NAVBAR NAVIGATION SWITCHER (WITH BACK BUTTON SUPPORT) ---
+    // --- ENGINES: NAVBAR NAVIGATION SWITCHER (DIOPTIMALKAN TANPA BLOCKING) ---
     const switchTab = (tabName, isPopStateTriggered = false) => {
-        if (currentActiveTab === tabName) return;
-
-        // Modifikasi history state agar mendukung tombol back Android
-        if (!isPopStateTriggered) {
+        // Logika pushState hanya berjalan jika tab benar-benar berubah lewat klik manual
+        if (!isPopStateTriggered && currentActiveTab !== tabName) {
             if (tabName !== 'dashboard') {
                 if (currentActiveTab === 'dashboard') {
-                    // Dari dashboard ke tab lain -> tambah history
                     window.history.pushState({ tab: tabName }, '');
                 } else {
-                    // Pindah antar tab selain dashboard -> timpa history agar tidak menumpuk
                     window.history.replaceState({ tab: tabName }, '');
                 }
             }
@@ -136,6 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // Selalu pastikan display disinkronkan tanpa interupsi 'return early'
         dashboardView.style.display = (tabName === 'dashboard') ? 'flex' : 'none';
         memoView.style.display = (tabName === 'memo') ? 'flex' : 'none';
         themeView.style.display = (tabName === 'theme') ? 'flex' : 'none';
@@ -145,7 +142,6 @@ document.addEventListener('DOMContentLoaded', () => {
         item.addEventListener('click', () => {
             const tabTarget = item.getAttribute('data-tab');
             if (tabTarget === 'dashboard' && currentActiveTab !== 'dashboard') {
-                // Jika ingin ke dashboard dari tab lain, kita trigger back agar history bersih
                 window.history.back(); 
             } else {
                 switchTab(tabTarget);
@@ -232,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- ANDROID HARDWARE BACK BUTTON LOGIC MANAGEMENT ---
+    // --- MANAGEMENT NAVIGASI HALAMAN DETAIL ---
     window.openList = (id) => {
         currentListId = id;
         const currentList = appData.find(l => l.id === id);
@@ -256,7 +252,11 @@ document.addEventListener('DOMContentLoaded', () => {
         currentListId = null;
         detailView.style.display = 'none';
         
-        switchTab(currentActiveTab, true); 
+        // Memaksa UI utama menampilkan tab yang aktif kembali (Mencegah Blank Screen)
+        dashboardView.style.display = (currentActiveTab === 'dashboard') ? 'flex' : 'none';
+        memoView.style.display = (currentActiveTab === 'memo') ? 'flex' : 'none';
+        themeView.style.display = (currentActiveTab === 'theme') ? 'flex' : 'none';
+        
         mainNavbar.style.display = 'flex';
         
         if (!isPopStateTriggered) {
@@ -267,13 +267,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     backBtn.addEventListener('click', () => closeDetailView(false));
 
-    // EVENT LISTENER: Tombol Back HP ditekan
+    // EVENT LISTENER: Tombol Back Hardwere Smartphone Ditekan
     window.addEventListener('popstate', (event) => {
         if (detailView.style.display === 'flex') {
             closeDetailView(true);
         } else {
-            // Mengembalikan user ke tab utama (Dashboard) jika sedang di tab Memo/Tema
-            switchTab('dashboard', true);
+            // Memulihkan tab yang sesuai state, default kembali ke Dashboard
+            if (event.state && event.state.tab) {
+                switchTab(event.state.tab, true);
+            } else {
+                switchTab('dashboard', true);
+            }
         }
     });
 
@@ -507,7 +511,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- ACTIONS DI DALAM BOTTOM SHEET MENU ---
-    
     optSearch.addEventListener('click', () => {
         closeBottomSheet();
         searchBarContainer.style.display = 'flex';
@@ -626,7 +629,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         recognition.onresult = (event) => {
             let rawText = event.results[0][0].transcript.replace(/\.$/, '');
-            // Membuat huruf pertama otomatis menjadi kapital
             let cleanText = rawText.charAt(0).toUpperCase() + rawText.slice(1);
             
             itemInput.value = cleanText; 

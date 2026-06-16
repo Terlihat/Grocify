@@ -60,7 +60,6 @@ document.addEventListener('DOMContentLoaded', () => {
         'permen': '#ff4081',
         'sunset': '#ff6d00',
         'rosegold': '#e5a9a9',
-        // Tema Terang Baru
         'light-nordic': '#5b7c99',
         'light-citrus': '#ff9800',
         'light-cotton': '#f48fb1',
@@ -80,14 +79,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.style.setProperty('--primary-color', color);
         localStorage.setItem('grocify_theme', themeName);
         
-        // Deteksi Light Mode
         if(themeName.startsWith('light-')) {
             document.body.classList.add('light-theme');
         } else {
             document.body.classList.remove('light-theme');
         }
         
-        // Perbarui class active di menu pengaturan tampilan
         document.querySelectorAll('.theme-tile').forEach(tile => {
             if(tile.getAttribute('data-theme') === themeName) {
                 tile.classList.add('active');
@@ -97,11 +94,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
     
-    // Jalankan tema yang tersimpan saat loading awal aplikasi
     const savedTheme = localStorage.getItem('grocify_theme') || 'default';
     applyTheme(savedTheme);
 
-    // Kumpulan Event Listener Klik Tile Tema
     document.querySelectorAll('.theme-tile').forEach(tile => {
         tile.addEventListener('click', () => {
             const selectedTheme = tile.getAttribute('data-theme');
@@ -115,8 +110,23 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('grocify_memo', e.target.value);
     });
 
-    // --- ENGINES: NAVBAR NAVIGATION SWITCHER ---
-    const switchTab = (tabName) => {
+    // --- ENGINES: NAVBAR NAVIGATION SWITCHER (WITH BACK BUTTON SUPPORT) ---
+    const switchTab = (tabName, isPopStateTriggered = false) => {
+        if (currentActiveTab === tabName) return;
+
+        // Modifikasi history state agar mendukung tombol back Android
+        if (!isPopStateTriggered) {
+            if (tabName !== 'dashboard') {
+                if (currentActiveTab === 'dashboard') {
+                    // Dari dashboard ke tab lain -> tambah history
+                    window.history.pushState({ tab: tabName }, '');
+                } else {
+                    // Pindah antar tab selain dashboard -> timpa history agar tidak menumpuk
+                    window.history.replaceState({ tab: tabName }, '');
+                }
+            }
+        }
+        
         currentActiveTab = tabName;
         navItems.forEach(item => {
             if(item.getAttribute('data-tab') === tabName) {
@@ -134,7 +144,12 @@ document.addEventListener('DOMContentLoaded', () => {
     navItems.forEach(item => {
         item.addEventListener('click', () => {
             const tabTarget = item.getAttribute('data-tab');
-            switchTab(tabTarget);
+            if (tabTarget === 'dashboard' && currentActiveTab !== 'dashboard') {
+                // Jika ingin ke dashboard dari tab lain, kita trigger back agar history bersih
+                window.history.back(); 
+            } else {
+                switchTab(tabTarget);
+            }
         });
     });
 
@@ -241,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentListId = null;
         detailView.style.display = 'none';
         
-        switchTab(currentActiveTab);
+        switchTab(currentActiveTab, true); 
         mainNavbar.style.display = 'flex';
         
         if (!isPopStateTriggered) {
@@ -252,9 +267,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     backBtn.addEventListener('click', () => closeDetailView(false));
 
+    // EVENT LISTENER: Tombol Back HP ditekan
     window.addEventListener('popstate', (event) => {
         if (detailView.style.display === 'flex') {
             closeDetailView(true);
+        } else {
+            // Mengembalikan user ke tab utama (Dashboard) jika sedang di tab Memo/Tema
+            switchTab('dashboard', true);
         }
     });
 
@@ -594,20 +613,35 @@ document.addEventListener('DOMContentLoaded', () => {
     priceInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addItem(); });
     newListInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') createListBtn.click(); });
 
-    // --- MIC SPEECH ENGINE ---
+    // --- MIC SPEECH ENGINE (WITH AUTO CAPITALIZE) ---
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition && micBtn) {
         const recognition = new SpeechRecognition();
         recognition.lang = 'id-ID'; recognition.interimResults = false; recognition.maxAlternatives = 1;
-        recognition.onstart = () => { micBtn.classList.add('recording'); itemInput.placeholder = "Mendengarkan..."; };
-        recognition.onresult = (event) => {
-            let cleanText = event.results[0][0].transcript.replace(/\.$/, '');
-            itemInput.value = cleanText; itemInput.placeholder = "Nama barang..."; micBtn.classList.remove('recording'); priceInput.focus();
+        
+        recognition.onstart = () => { 
+            micBtn.classList.add('recording'); 
+            itemInput.placeholder = "Mendengarkan..."; 
         };
+        
+        recognition.onresult = (event) => {
+            let rawText = event.results[0][0].transcript.replace(/\.$/, '');
+            // Membuat huruf pertama otomatis menjadi kapital
+            let cleanText = rawText.charAt(0).toUpperCase() + rawText.slice(1);
+            
+            itemInput.value = cleanText; 
+            itemInput.placeholder = "Nama barang..."; 
+            micBtn.classList.remove('recording'); 
+            priceInput.focus();
+        };
+        
         recognition.onerror = () => { micBtn.classList.remove('recording'); itemInput.placeholder = "Nama barang..."; };
         recognition.onend = () => { micBtn.classList.remove('recording'); itemInput.placeholder = "Nama barang..."; };
+        
         micBtn.addEventListener('click', () => recognition.start());
-    } else if (micBtn) { micBtn.style.display = 'none'; }
+    } else if (micBtn) { 
+        micBtn.style.display = 'none'; 
+    }
 
     renderDashboard();
 });

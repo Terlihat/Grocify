@@ -1,7 +1,7 @@
 :root {
     --bg-color: #121212;
     --surface-color: #1e1e1e;
-    --primary-color: #00e676; 
+    --primary-color: #00e676; /* Warna ini akan di-override otomatis oleh JS */
     --text-primary: #ffffff;
     --text-secondary: #a0a0a0;
     --danger-color: #ff5252;
@@ -31,6 +31,8 @@ body {
     height: 100dvh;
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 /* --- SYSTEM VIEW --- */
@@ -43,6 +45,7 @@ body {
     top: 0;
     left: 0;
     background-color: var(--bg-color);
+    padding-bottom: 70px; /* Jarak aman agar tidak tertutup Navbar Bawah */
 }
 
 /* --- DASHBOARD STYLES --- */
@@ -57,7 +60,7 @@ body {
     padding: 0 16px; border-radius: 12px; background-color: var(--primary-color);
     color: var(--bg-color); border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;
 }
-#create-list-btn:active { background-color: #00c853; }
+#create-list-btn:active { background-color: #00c853; opacity: 0.9; }
 
 .dashboard-main { padding: 20px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 12px; }
 
@@ -74,15 +77,16 @@ body {
 .stat-item i { color: var(--primary-color); }
 
 .list-card-actions { display: flex; gap: 8px; margin-top: 4px; }
-.btn-open { flex: 1; padding: 10px; background-color: rgba(0, 230, 118, 0.1); color: var(--primary-color); border: 1px solid var(--primary-color); border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btn-open { flex: 1; padding: 10px; background-color: rgba(255, 255, 255, 0.03); color: var(--primary-color); border: 1px solid var(--primary-color); border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
 .btn-open:active { background-color: var(--primary-color); color: var(--bg-color); }
 .btn-share-list, .btn-delete-list { padding: 10px 14px; background-color: transparent; border-radius: 8px; cursor: pointer; font-size: 16px; transition: all 0.2s; }
 .btn-share-list { color: var(--primary-color); border: 1px solid #333; }
-.btn-share-list:active { background-color: rgba(0, 230, 118, 0.1); border-color: var(--primary-color); }
+.btn-share-list:active { background-color: rgba(255, 255, 255, 0.05); }
 .btn-delete-list { color: var(--danger-color); border: 1px solid #333; }
 .btn-delete-list:active { background-color: rgba(255, 82, 82, 0.1); border-color: var(--danger-color); }
 
 /* --- COMPACT DETAIL VIEW STYLES --- */
+#detail-view.view-section { padding-bottom: 0px; } /* Detail full hingga bawah */
 .detail-header-compact { padding: 16px 20px; background-color: var(--surface-color); border-bottom: 1px solid #252525; flex-shrink: 0; }
 .header-top { display: flex; flex-direction: column; }
 .header-top h1 { font-size: 22px; font-weight: 700; color: var(--primary-color); display: flex; align-items: center; gap: 10px; }
@@ -94,7 +98,6 @@ body {
 .menu-trigger-btn { background: none; border: none; color: var(--text-primary); font-size: 20px; cursor: pointer; padding: 6px 10px; position: absolute; right: -6px; top: 50%; transform: translateY(-50%); border-radius: 50%; }
 .menu-trigger-btn:active { background-color: rgba(255, 255, 255, 0.05); }
 
-/* BAR PENCARIAN DI ATAS */
 .search-bar-container { display: flex; align-items: center; background-color: var(--bg-color); border: 1px solid var(--primary-color); border-radius: 10px; padding: 6px 12px; margin-top: 10px; gap: 8px; }
 .search-icon { color: var(--primary-color); font-size: 13px; }
 #search-items-input { flex: 1; background: none; border: none; color: var(--text-primary); font-size: 13px; outline: none; }
@@ -126,9 +129,7 @@ body {
 .item-text { font-size: 14px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .item-price { font-size: 11px; color: var(--primary-color); font-weight: 600; }
 
-/* Kontrol Kanan (Qty, Satuan, Hapus) */
 .item-right-controls { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-
 .qty-container { display: flex; align-items: center; background-color: var(--bg-color); border-radius: 6px; border: 1px solid #333; overflow: hidden; }
 .qty-btn { background: none; border: none; color: var(--text-primary); width: 22px; height: 22px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .qty-btn:active { background-color: #222; color: var(--primary-color); }
@@ -139,6 +140,43 @@ body {
 
 .delete-btn { background: none; border: none; color: var(--text-secondary); font-size: 14px; cursor: pointer; padding: 6px; border-radius: 6px; }
 .delete-btn:active { color: var(--danger-color); background-color: rgba(255, 82, 82, 0.1); }
+
+/* --- MEMO STYLE --- */
+.memo-main { flex: 1; padding: 16px; display: flex; }
+#memo-textarea {
+    flex: 1; width: 100%; height: 100%; background-color: var(--surface-color); border: 1px solid #2d2d2d;
+    border-radius: 14px; color: var(--text-primary); padding: 16px; font-size: 15px; line-height: 1.6;
+    outline: none; resize: none;
+}
+#memo-textarea:focus { border-color: var(--primary-color); }
+
+/* --- THEME STYLE --- */
+.theme-main { flex: 1; padding: 20px; overflow-y: auto; }
+.theme-grid { display: flex; flex-direction: column; gap: 10px; }
+.theme-tile {
+    background-color: var(--surface-color); border: 1px solid #2d2d2d; border-radius: 12px;
+    padding: 14px 18px; color: var(--text-primary); font-size: 14px; font-weight: 600;
+    display: flex; align-items: center; gap: 14px; cursor: pointer; text-align: left; transition: all 0.2s;
+}
+.theme-dot { width: 18px; height: 18px; border-radius: 50%; display: inline-block; }
+.theme-tile:active { background-color: rgba(255,255,255,0.02); }
+.theme-tile.active { border-color: var(--primary-color); background-color: rgba(255,255,255,0.03); }
+
+/* --- PREMIUM BOTTOM NAVBAR --- */
+.main-navbar {
+    position: absolute; bottom: 0; left: 0; width: 100%; height: 64px;
+    background-color: var(--surface-color); border-top: 1px solid #2d2d2d;
+    display: flex; justify-content: space-around; align-items: center; z-index: 15;
+    padding-bottom: env(safe-area-inset-bottom);
+}
+.nav-item {
+    background: none; border: none; display: flex; flex-direction: column; align-items: center;
+    gap: 4px; color: var(--text-secondary); cursor: pointer; width: 30%; height: 100%; justify-content: center;
+}
+.nav-item i { font-size: 18px; transition: transform 0.2s; }
+.nav-item span { font-size: 11px; font-weight: 500; }
+.nav-item.active { color: var(--primary-color); }
+.nav-item.active i { transform: scale(1.1); }
 
 /* --- BOTTOM SHEET COMPONENT DESIGN --- */
 .sheet-overlay {
@@ -162,7 +200,7 @@ body {
 
 .sheet-body { padding: 4px 16px 24px 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
 .sheet-item {
-    background: none; border: none; width: 100%; padding: 14px 16px; font-size: 14px;
+    background: none; border: none; width: 100%; padding: 12px 16px; font-size: 14px;
     color: var(--text-primary); text-align: left; display: flex; align-items: center; gap: 14px;
     border-radius: 12px; cursor: pointer; font-weight: 500;
 }
@@ -189,7 +227,7 @@ body {
 #item-input:focus, #price-input:focus { border-color: var(--primary-color); }
 
 .action-buttons-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 8px; flex-shrink: 0; }
-#add-btn { background-color: var(--primary-color); color: var(--bg-color); border: none; border-radius: 50%; width: 44px; height: 44px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0, 230, 118, 0.3); }
+#add-btn { background-color: var(--primary-color); color: var(--bg-color); border: none; border-radius: 50%; width: 44px; height: 44px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }
 #add-btn:active { transform: scale(0.94); }
 
 .mic-btn { background-color: var(--surface-color); color: var(--text-secondary); border: 1px solid #333; border-radius: 50%; width: 36px; height: 36px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }

@@ -1,6 +1,6 @@
 {
   "name": "Smart Grocify",
-  "short_name": "Grocify",
+  "short_name": "Smart Grocify",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#000000",

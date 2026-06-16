@@ -1,7 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
     const dashboardView = document.getElementById('dashboard-view');
+    const memoView = document.getElementById('memo-view');
+    const themeView = document.getElementById('theme-view');
     const detailView = document.getElementById('detail-view');
+    
     const listsContainer = document.getElementById('lists-container');
     const newListInput = document.getElementById('new-list-input');
     const createListBtn = document.getElementById('create-list-btn');
@@ -19,6 +22,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const mainScroll = document.getElementById('main-scroll');
     const micBtn = document.getElementById('mic-btn');
 
+    // Bottom Navigation Bar
+    const mainNavbar = document.getElementById('main-navbar');
+    const navItems = document.querySelectorAll('.nav-item');
+
+    // Memo Elements
+    const memoTextarea = document.getElementById('memo-textarea');
+
     // Bottom Sheet Elements
     const menuTriggerBtn = document.getElementById('menu-trigger-btn');
     const sheetOverlay = document.getElementById('sheet-overlay');
@@ -29,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const optSearch = document.getElementById('opt-search');
     const optRename = document.getElementById('opt-rename');
     const optShare = document.getElementById('opt-share');
+    const optEditCheckedPrice = document.getElementById('opt-edit-checked-price');
     const optUncheckAll = document.getElementById('opt-uncheck-all');
     const optCheckAll = document.getElementById('opt-check-all');
     const optDeleteAll = document.getElementById('opt-delete-all');
@@ -40,12 +51,83 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const categories = ["Umum", "Sayuran & Buah", "Daging & Ikan", "Bumbu Dapur", "Minuman", "Kebersihan"];
 
+    // Map Palet Warna Tema
+    const themeColors = {
+        default: '#00e676',
+        ocean: '#00b0ff',
+        sapphire: '#2979ff',
+        lavender: '#b400ff',
+        permen: '#ff4081',
+        sunset: '#ff6d00',
+        rosegold: '#e5a9a9'
+    };
+
     // --- State Management ---
     let appData = JSON.parse(localStorage.getItem('grocify_app_data')) || [];
     let itemHistory = JSON.parse(localStorage.getItem('grocify_history')) || [];
     let currentListId = null;
-    let filterQuery = ""; // Query filter untuk pencarian internal barang
+    let filterQuery = ""; 
+    let currentActiveTab = "dashboard";
 
+    // --- ENGINES: THEME SYSTEM ---
+    const applyTheme = (themeName) => {
+        const color = themeColors[themeName] || themeColors.default;
+        document.documentElement.style.setProperty('--primary-color', color);
+        localStorage.setItem('grocify_theme', themeName);
+        
+        // Perbarui class active di tile visual pengaturan tampilan
+        document.querySelectorAll('.theme-tile').forEach(tile => {
+            if(tile.getAttribute('data-theme') === themeName) {
+                tile.classList.add('active');
+            } else {
+                tile.classList.remove('active');
+            }
+        });
+    };
+    // Jalankan tema yang tersimpan saat loading awal aplikasi
+    const savedTheme = localStorage.getItem('grocify_theme') || 'default';
+    applyTheme(savedTheme);
+
+    // Kumpulan Event Listener Klik Tile Tema
+    document.querySelectorAll('.theme-tile').forEach(tile => {
+        tile.addEventListener('click', () => {
+            const selectedTheme = tile.getAttribute('data-theme');
+            applyTheme(selectedTheme);
+        });
+    });
+
+    // --- ENGINES: AUTO-SAVE CATATAN MEMO ---
+    memoTextarea.value = localStorage.getItem('grocify_memo') || '';
+    memoTextarea.addEventListener('input', (e) => {
+        localStorage.setItem('grocify_memo', e.target.value);
+    });
+
+    // --- ENGINES: NAVBAR NAVIGATION SWITCHER ---
+    const switchTab = (tabName) => {
+        currentActiveTab = tabName;
+        // Atur status aktif button di navbar
+        navItems.forEach(item => {
+            if(item.getAttribute('data-tab') === tabName) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+
+        // Toggle visibility halaman tab secara rapi
+        dashboardView.style.display = (tabName === 'dashboard') ? 'flex' : 'none';
+        memoView.style.display = (tabName === 'memo') ? 'flex' : 'none';
+        themeView.style.display = (tabName === 'theme') ? 'flex' : 'none';
+    };
+
+    navItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const tabTarget = item.getAttribute('data-tab');
+            switchTab(tabTarget);
+        });
+    });
+
+    // --- DATA SAVE CONTROLLER ---
     const saveAppData = () => {
         localStorage.setItem('grocify_app_data', JSON.stringify(appData));
     };
@@ -63,7 +145,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return 'Rp ' + new Intl.NumberFormat('id-ID').format(num);
     };
 
-    // Format Tanggal: DD-MM-YY (31-06-26)
     const formatDate = (timestamp) => {
         const d = new Date(parseInt(timestamp));
         const day = String(d.getDate()).padStart(2, '0');
@@ -72,12 +153,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${day}-${month}-${year}`;
     };
 
-    // --- DASHBOARD LOGIC ---
+    // --- DASHBOARD RENDERING ---
     const renderDashboard = () => {
         listsContainer.innerHTML = '';
-        
         if(appData.length === 0) {
-            listsContainer.innerHTML = `<p style="text-align:center; color: var(--text-secondary); margin-top: 20px; font-size: 14px;">Belum ada daftar belanja. Buat satu di atas!</p>`;
+            listsContainer.innerHTML = `<p style="text-align:center; color: var(--text-secondary); margin-top: 40px; font-size: 14px;">Belum ada daftar belanja. Buat satu di atas!</p>`;
         }
 
         appData.forEach(list => {
@@ -126,29 +206,53 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // --- ANDROID HARDWARE BACK BUTTON LOGIC MANAGEMENT ---
     window.openList = (id) => {
         currentListId = id;
         const currentList = appData.find(l => l.id === id);
         currentListTitle.textContent = currentList.name;
         
-        // Reset pencarian saat buka daftar baru
         filterQuery = "";
         searchItemsInput.value = "";
         searchBarContainer.style.display = 'none';
 
+        // Sembunyikan navigasi utama & tampilkan detail barang
         dashboardView.style.display = 'none';
+        memoView.style.display = 'none';
+        themeView.style.display = 'none';
+        mainNavbar.style.display = 'none'; 
         detailView.style.display = 'flex';
         renderDetailList();
+
+        // INTEGRASI SISTEM ANDROID BACK BUTTON: Dorong state baru ke dalam riwayat window browser
+        window.history.pushState({ view: 'detail_page' }, '');
     };
 
-    backBtn.addEventListener('click', () => {
+    const closeDetailView = (isPopStateTriggered = false) => {
         currentListId = null;
         detailView.style.display = 'none';
-        dashboardView.style.display = 'flex';
+        
+        // Kembalikan tampilan ke tab yang terakhir aktif & munculkan navbar kembali
+        switchTab(currentActiveTab);
+        mainNavbar.style.display = 'flex';
+        
+        // Jika penutupan dipicu tombol "Kembali" manual di layar, kita buang artificial history state-nya
+        if (!isPopStateTriggered) {
+            window.history.back();
+        }
         renderDashboard();
+    };
+
+    backBtn.addEventListener('click', () => closeDetailView(false));
+
+    // Menangkap sinyal tombol Back fisik HP Android / Gestur back usap layar tepi hp
+    window.addEventListener('popstate', (event) => {
+        if (detailView.style.display === 'flex') {
+            closeDetailView(true); // Tutup view detail dengan aman tanpa menutup aplikasi keseluruhan
+        }
     });
 
-    // --- SHARE LOGIC (Bisa dipanggil dari Dashboard & Menu Atas) ---
+    // --- SHARE LOGIC VIA WA ---
     window.shareList = (id) => {
         const listToShare = appData.find(l => l.id === id);
         if (!listToShare || listToShare.items.length === 0) { 
@@ -164,10 +268,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const itemPrice = parseInt(item.price) || 0;
             const itemQty = parseInt(item.qty) || 1;
             const subTotal = itemPrice * itemQty;
-            
             totalAnggaran += subTotal;
             if (item.completed) totalDibeli += subTotal;
-            
             return { ...item, price: itemPrice, qty: itemQty, category: item.category || 'Umum' };
         });
         
@@ -189,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.open(waUrl, '_blank');
     };
 
-    // --- DETAIL LIST LOGIC ---
+    // --- DETAIL LIST RENDER ENGINE ---
     const renderDetailList = () => {
         const currentList = appData.find(l => l.id === currentListId);
         if(!currentList) return;
@@ -198,7 +300,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalAnggaran = 0;
         let totalDibeli = 0;
 
-        // Ambil data item + kalkulasi total uang riil (tidak terpengaruh filter cari)
         currentList.items.forEach(item => {
             const subTotal = (parseInt(item.price) || 0) * (parseInt(item.qty) || 1);
             totalAnggaran += subTotal;
@@ -208,7 +309,6 @@ document.addEventListener('DOMContentLoaded', () => {
         totalPriceEl.textContent = formatRupiah(totalAnggaran);
         completedPriceEl.textContent = formatRupiah(totalDibeli);
 
-        // Map item dengan Index Aslinya agar fungsi hapus/centang tidak salah sasaran pas di-filter pencarian
         const itemsWithIndex = currentList.items.map((item, index) => ({
             ...item,
             price: parseInt(item.price) || 0,
@@ -217,7 +317,6 @@ document.addEventListener('DOMContentLoaded', () => {
             originalIndex: index
         }));
 
-        // Filter berdasarkan kolom pencarian jika ada isinya
         const filteredItems = itemsWithIndex.filter(item => 
             item.text.toLowerCase().includes(filterQuery.toLowerCase())
         );
@@ -240,7 +339,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 catItems.forEach(item => {
                     const li = document.createElement('li');
                     li.className = `list-item ${item.completed ? 'completed' : ''}`;
-                    
                     const displayPrice = item.price > 0 ? formatRupiah(item.price * item.qty) : '';
 
                     li.innerHTML = `
@@ -334,11 +432,11 @@ document.addEventListener('DOMContentLoaded', () => {
         renderDetailList();
     };
 
-    // --- LOGIKA BOTTOM SHEET (SWIPEABLE/GESER) ---
+    // --- LOGIKA BOTTOM SHEET TOUCH DRAG GESTURES ---
     const openBottomSheet = () => {
         sheetOverlay.classList.add('show');
         bottomSheet.classList.add('show');
-        bottomSheet.style.height = "50vh"; // Set ke setengah layar default
+        bottomSheet.style.height = "50vh"; 
     };
 
     const closeBottomSheet = () => {
@@ -350,7 +448,6 @@ document.addEventListener('DOMContentLoaded', () => {
     menuTriggerBtn.addEventListener('click', openBottomSheet);
     sheetOverlay.addEventListener('click', closeBottomSheet);
 
-    // Sistem Geser Sentuh (Touch Events) untuk Bottom Sheet
     let isDragging = false;
     let startY, startHeight;
 
@@ -362,9 +459,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('touchmove', (e) => {
         if (!isDragging) return;
-        const deltaY = e.touches[0].pageY - startY; // Positif jika geser bawah, negatif jika atas
+        const deltaY = e.touches[0].pageY - startY;
         const newHeight = startHeight - deltaY;
-        const maxHeight = window.innerHeight * 0.70; // Batas geser atas (70% Layar tidak Full)
+        const maxHeight = window.innerHeight * 0.70;
 
         if (newHeight <= maxHeight) {
             bottomSheet.style.height = `${newHeight}px`;
@@ -378,17 +475,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const halfScreen = window.innerHeight * 0.35;
 
         if (currentHeight < halfScreen) {
-            closeBottomSheet(); // Tutup jika di-swipe ke bawah jauh
+            closeBottomSheet(); 
         } else if (currentHeight > window.innerHeight * 0.55) {
-            bottomSheet.style.height = "70vh"; // Rentangkan sedikit ke atas
+            bottomSheet.style.height = "70vh"; 
         } else {
-            bottomSheet.style.height = "50vh"; // Kembalikan ke posisi tengah
+            bottomSheet.style.height = "50vh"; 
         }
     });
 
     // --- ACTIONS DI DALAM BOTTOM SHEET MENU ---
     
-    // 1. Cari di dalam daftar
     optSearch.addEventListener('click', () => {
         closeBottomSheet();
         searchBarContainer.style.display = 'flex';
@@ -407,7 +503,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderDetailList();
     });
 
-    // 2. Ganti Nama Daftar
     optRename.addEventListener('click', () => {
         closeBottomSheet();
         const currentList = appData.find(l => l.id === currentListId);
@@ -419,13 +514,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 3. Bagikan via WA
     optShare.addEventListener('click', () => {
         closeBottomSheet();
         shareList(currentListId);
     });
 
-    // 4. Batalkan Centang Semua Item
+    // MENU BARU: EDIT HARGA MASAL BAGI YANG DICENTANG (COMPLETED)
+    optEditCheckedPrice.addEventListener('click', () => {
+        closeBottomSheet();
+        const currentList = appData.find(l => l.id === currentListId);
+        if (!currentList) return;
+        
+        const checkedItems = currentList.items.filter(item => item.completed);
+        if (checkedItems.length === 0) {
+            alert("Tidak ada item yang dicentang di daftar ini.");
+            return;
+        }
+
+        const inputPrice = prompt(`Masukkan harga baru untuk ${checkedItems.length} item yang dicentang:`);
+        if (inputPrice !== null) {
+            const newPrice = parseInt(inputPrice) || 0;
+            currentList.items.forEach(item => {
+                if (item.completed) {
+                    item.price = newPrice;
+                }
+            });
+            saveAppData();
+            renderDetailList();
+        }
+    });
+
     optUncheckAll.addEventListener('click', () => {
         closeBottomSheet();
         const currentList = appData.find(l => l.id === currentListId);
@@ -434,7 +552,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderDetailList();
     });
 
-    // 5. Centang Semua Item
     optCheckAll.addEventListener('click', () => {
         closeBottomSheet();
         const currentList = appData.find(l => l.id === currentListId);
@@ -443,7 +560,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderDetailList();
     });
 
-    // 6. Hapus Semua Item
     optDeleteAll.addEventListener('click', () => {
         closeBottomSheet();
         if(confirm("Apakah Anda yakin ingin menghapus seluruh barang di daftar ini?")) {
@@ -454,7 +570,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- SUGGESTIONS & ENTER INPUT LOGIC ---
+    // --- SUGGESTIONS & CLICKS CONTROLLERS ---
     itemInput.addEventListener('input', (e) => {
         const val = e.target.value.toLowerCase().trim();
         suggestionsContainer.innerHTML = ''; 
@@ -475,7 +591,7 @@ document.addEventListener('DOMContentLoaded', () => {
     priceInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addItem(); });
     newListInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') createListBtn.click(); });
 
-    // --- FITUR WEB SPEECH API ---
+    // --- MIC SPEECH ENGINE ---
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition && micBtn) {
         const recognition = new SpeechRecognition();
@@ -493,7 +609,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderDashboard();
 });
 
-// --- PWA: REGISTRASI SERVICE WORKER ---
+// --- PWA SERVICE WORKER REGISTRATION ---
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').catch((error) => console.log('ServiceWorker gagal:', error));

@@ -16,63 +16,83 @@
 </head>
 <body>
     <div class="app-container">
-        <header>
-            <div class="header-top">
-                <h1><i class="fa-solid fa-basket-shopping"></i> Grocify</h1>
-                <p>Daftar Belanja Cerdas & Cepat</p>
-            </div>
+        
+        <div id="dashboard-view" class="view-section">
+            <header class="dashboard-header">
+                <div class="header-top">
+                    <h1><i class="fa-solid fa-basket-shopping"></i> Grocify</h1>
+                    <p>Buku Catatan Belanja Anda</p>
+                </div>
+                <div class="new-list-area">
+                    <input type="text" id="new-list-input" placeholder="Nama daftar baru (Cth: Belanja Bulanan)..." autocomplete="off">
+                    <button id="create-list-btn"><i class="fa-solid fa-plus"></i> Buat</button>
+                </div>
+            </header>
             
-            <div class="total-summary">
-                <div class="summary-card">
-                    <span class="summary-label">Total Anggaran</span>
-                    <span id="total-price" class="summary-value">Rp 0</span>
-                </div>
-                <div class="summary-card accent">
-                    <span class="summary-label">Sudah Dibeli</span>
-                    <span id="completed-price" class="summary-value">Rp 0</span>
-                </div>
-            </div>
-        </header>
-
-        <div class="action-bar">
-            <button id="clear-completed-btn" class="action-btn">
-                <i class="fa-solid fa-broom"></i> Bersihkan
-            </button>
-            <button id="share-btn" class="action-btn">
-                <i class="fa-brands fa-whatsapp"></i> Bagikan
-            </button>
+            <main id="lists-container" class="dashboard-main">
+                </main>
         </div>
 
-        <main id="main-scroll">
-            <ul id="shopping-list">
-                </ul>
-        </main>
-
-        <div class="input-area">
-            <div class="input-wrapper">
-                <select id="category-select">
-                    <option value="Umum">📦 Umum</option>
-                    <option value="Sayuran & Buah">🥬 Sayuran & Buah</option>
-                    <option value="Daging & Ikan">🥩 Daging & Ikan</option>
-                    <option value="Bumbu Dapur">🧂 Bumbu Dapur</option>
-                    <option value="Minuman">🥤 Minuman</option>
-                    <option value="Kebersihan">🧼 Kebersihan</option>
-                </select>
-                
-                <div id="suggestions-container" class="suggestions-container"></div>
-                
-                <div class="input-row">
-                    <input type="text" id="item-input" placeholder="Nama barang..." autocomplete="off">
-                    <input type="number" id="price-input" placeholder="Harga (Rp)..." autocomplete="off" inputmode="numeric">
+        <div id="detail-view" class="view-section" style="display: none;">
+            <header>
+                <div class="header-top detail-top">
+                    <button id="back-btn" class="back-btn"><i class="fa-solid fa-chevron-left"></i> Kembali</button>
+                    <h1 id="current-list-title">Nama Daftar</h1>
                 </div>
-            </div>
-            <div class="action-buttons-col">
-                <button id="mic-btn" class="mic-btn" aria-label="Input Suara">
-                    <i class="fa-solid fa-microphone"></i>
+                
+                <div class="total-summary">
+                    <div class="summary-card">
+                        <span class="summary-label">Total Anggaran</span>
+                        <span id="total-price" class="summary-value">Rp 0</span>
+                    </div>
+                    <div class="summary-card accent">
+                        <span class="summary-label">Sudah Dibeli</span>
+                        <span id="completed-price" class="summary-value">Rp 0</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="action-bar">
+                <button id="clear-completed-btn" class="action-btn">
+                    <i class="fa-solid fa-broom"></i> Bersihkan
                 </button>
-                <button id="add-btn"><i class="fa-solid fa-plus"></i></button>
+                <button id="share-btn" class="action-btn">
+                    <i class="fa-brands fa-whatsapp"></i> Bagikan
+                </button>
+            </div>
+
+            <main id="main-scroll">
+                <ul id="shopping-list">
+                    </ul>
+            </main>
+
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <select id="category-select">
+                        <option value="Umum">📦 Umum</option>
+                        <option value="Sayuran & Buah">🥬 Sayuran & Buah</option>
+                        <option value="Daging & Ikan">🥩 Daging & Ikan</option>
+                        <option value="Bumbu Dapur">🧂 Bumbu Dapur</option>
+                        <option value="Minuman">🥤 Minuman</option>
+                        <option value="Kebersihan">🧼 Kebersihan</option>
+                    </select>
+                    
+                    <div id="suggestions-container" class="suggestions-container"></div>
+                    
+                    <div class="input-row">
+                        <input type="text" id="item-input" placeholder="Nama barang..." autocomplete="off">
+                        <input type="number" id="price-input" placeholder="Harga (Rp)..." autocomplete="off" inputmode="numeric">
+                    </div>
+                </div>
+                <div class="action-buttons-col">
+                    <button id="mic-btn" class="mic-btn" aria-label="Input Suara">
+                        <i class="fa-solid fa-microphone"></i>
+                    </button>
+                    <button id="add-btn"><i class="fa-solid fa-plus"></i></button>
+                </div>
             </div>
         </div>
+
     </div>
     
     <script src="script.js"></script>

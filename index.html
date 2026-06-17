@@ -2,133 +2,217 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <meta name="theme-color" content="#1e1e1e">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
     <title>Smart Grocify</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-
     <div class="app-container">
         
-        <div id="dashboard-view" class="view-panel" style="display: flex;">
-            <header>
-                <h1>Smart Grocify</h1>
-                <p>Kelola daftar belanja kebutuhan harian Anda</p>
-            </header>
-            <div class="input-group">
-                <input type="text" id="new-list-input" placeholder="Nama daftar belanja baru...">
-                <button id="create-list-btn" class="btn-primary">Buat Daftar</button>
-            </div>
-            <div id="lists-container"></div>
-        </div>
-
-        <div id="detail-view" class="view-panel">
-            <div class="detail-header">
-                <button id="back-btn" class="back-btn-style"><i class="fa-solid fa-arrow-left"></i></button>
-                <h1 id="current-list-title" style="font-size: 20px; flex: 1;">Detail Daftar</h1>
-                <button id="menu-trigger-btn" class="back-btn-style"><i class="fa-solid fa-ellipsis-vertical"></i></button>
-            </div>
-
-            <div id="search-bar-container" class="search-container-box">
-                <input type="text" id="search-items-input" placeholder="Cari barang dalam daftar...">
-                <button id="close-search-btn" class="back-btn-style" style="font-size:16px;"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-
-            <div class="summary-box">
-                <div>Total Estimasi:<span id="total-price">Rp 0</span></div>
-                <div style="text-align: right;">Sudah Dibeli:<span id="completed-price">Rp 0</span></div>
-            </div>
-
-            <div class="input-group" style="margin-bottom: 8px; gap:6px;">
-                <input type="text" id="item-input" placeholder="Nama barang..." style="flex:2;">
-                <button id="mic-btn" class="mic-btn-style"><i class="fa-solid fa-microphone"></i></button>
-                <input type="number" id="price-input" placeholder="Harga (opsional)" style="flex:1.2;">
-            </div>
-
-            <div style="margin-bottom: 12px;">
-                <select id="category-select">
-                    <option value="Umum">📦 Kategori: Umum</option>
-                    <option value="Sayuran & Buah">🥬 Kategori: Sayuran & Buah</option>
-                    <option value="Daging & Ikan">🥩 Kategori: Daging & Ikan</option>
-                    <option value="Bumbu Dapur">🧂 Kategori: Bumbu Dapur</option>
-                    <option value="Minuman">🥤 Kategori: Minuman</option>
-                    <option value="Kebersihan">🧼 Kategori: Kebersihan</option>
-                </select>
-            </div>
-
-            <div id="suggestions-container" class="suggestions-box"></div>
-            
-            <button id="add-btn" class="btn-primary" style="width: 100%; margin-bottom: 20px;">Tambah ke Daftar</button>
-
-            <div id="main-scroll" style="overflow-y: auto; max-height: 40vh;">
-                <ul id="shopping-list" class="shopping-list-container"></ul>
-            </div>
-        </div>
-
-        <div id="memo-view" class="view-panel">
-            <header>
-                <h1>Catatan Khusus</h1>
-                <p>Tulis memo acak atau resep masakan di sini</p>
-            </header>
-            <textarea id="memo-textarea" rows="15" placeholder="Tulis catatan belanjaan lepas Anda di sini (Otomatis tersimpan)..."></textarea>
-        </div>
-
-        <div id="theme-view" class="view-panel">
-            <header>
-                <h1>Koleksi Tema</h1>
-                <p>Pilih palet warna kesukaan Anda</p>
+        <div id="dashboard-view" class="view-section active-tab-view">
+            <header class="dashboard-header">
+                <div class="header-top">
+                    <h1><i class="fa-solid fa-basket-shopping"></i> Smart Grocify</h1>
+                    <p>Buku Catatan Belanja Anda</p>
+                </div>
+                <div class="new-list-area">
+                    <input type="text" id="new-list-input" placeholder="Nama daftar baru (Cth: Belanja Bulanan)..." autocomplete="off">
+                    <button id="create-list-btn"><i class="fa-solid fa-plus"></i> Buat</button>
+                </div>
             </header>
             
-            <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--text-secondary);">Tema Terang</h3>
-            <div class="theme-grid">
-                <div class="theme-tile" data-theme="default" style="--bg: #20b2aa;">Mint Green (Default)</div>
-                <div class="theme-tile" data-theme="light-nordic" style="--bg: #5b7c99;">Nordic Blue</div>
-                <div class="theme-tile" data-theme="light-citrus" style="--bg: #ff9800;">Citrus Orange</div>
-                <div class="theme-tile" data-theme="light-cotton" style="--bg: #f48fb1;">Cotton Candy</div>
-            </div>
+            <main id="lists-container" class="dashboard-main">
+                </main>
+        </div>
 
-            <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--text-secondary);">Tema Gelap</h3>
-            <div class="theme-grid">
-                <div class="theme-tile" data-theme="dark-neon" style="--bg: #00e676;">Neon Green</div>
-                <div class="theme-tile" data-theme="ocean" style="--bg: #00b0ff;">Ocean Blue</div>
-                <div class="theme-tile" data-theme="sapphire" style="--bg: #2979ff;">Sapphire</div>
-                <div class="theme-tile" data-theme="lavender" style="--bg: #b400ff;">Lavender</div>
-                <div class="theme-tile" data-theme="permen" style="--bg: #ff4081;">Pinky</div>
-                <div class="theme-tile" data-theme="sunset" style="--bg: #ff6d00;">Sunset</div>
-                <div class="theme-tile" data-theme="rosegold" style="--bg: #e5a9a9;">Rose Gold</div>
+        <div id="memo-view" class="view-section" style="display: none;">
+            <header class="dashboard-header">
+                <div class="header-top">
+                    <h1><i class="fa-solid fa-note-sticky"></i> Memo Belanja</h1>
+                    <p>Catatan cepat, otomatis tersimpan langsung</p>
+                </div>
+            </header>
+            <main class="memo-main">
+                <textarea id="memo-textarea" placeholder="Tulis catatan random di sini... (Cth: Titipan tetangga, resep masakan, nomor telepon kurir, dll)"></textarea>
+            </main>
+        </div>
+
+        <div id="theme-view" class="view-section" style="display: none;">
+            <header class="dashboard-header">
+                <div class="header-top">
+                    <h1><i class="fa-solid fa-palette"></i> Tema Aplikasi</h1>
+                    <p>Pilih nuansa warna yang Anda sukai</p>
+                </div>
+            </header>
+            <main class="theme-main">
+                <h3 class="theme-category-title">Mode Gelap (Dark)</h3>
+                <div class="theme-grid">
+                    <button class="theme-tile active" data-theme="default">
+                        <span class="theme-dot" style="background-color: #00e676;"></span> Default
+                    </button>
+                    <button class="theme-tile" data-theme="ocean">
+                        <span class="theme-dot" style="background-color: #00b0ff;"></span> Ocean
+                    </button>
+                    <button class="theme-tile" data-theme="sapphire">
+                        <span class="theme-dot" style="background-color: #2979ff;"></span> Sapphire
+                    </button>
+                    <button class="theme-tile" data-theme="lavender">
+                        <span class="theme-dot" style="background-color: #b400ff;"></span> Lavender
+                    </button>
+                    <button class="theme-tile" data-theme="permen">
+                        <span class="theme-dot" style="background-color: #ff4081;"></span> Permen
+                    </button>
+                    <button class="theme-tile" data-theme="sunset">
+                        <span class="theme-dot" style="background-color: #ff6d00;"></span> Sunset
+                    </button>
+                    <button class="theme-tile" data-theme="rosegold">
+                        <span class="theme-dot" style="background-color: #e5a9a9;"></span> Rose Gold
+                    </button>
+                </div>
+
+                <h3 class="theme-category-title" style="margin-top: 24px;">Mode Terang (Light)</h3>
+                <div class="theme-grid">
+                    <button class="theme-tile" data-theme="light-nordic">
+                        <span class="theme-dot" style="background-color: #5b7c99;"></span> Light Nordic
+                    </button>
+                    <button class="theme-tile" data-theme="light-citrus">
+                        <span class="theme-dot" style="background-color: #ff9800;"></span> Light Citrus
+                    </button>
+                    <button class="theme-tile" data-theme="light-cotton">
+                        <span class="theme-dot" style="background-color: #f48fb1;"></span> Light Cotton Candy
+                    </button>
+                    <button class="theme-tile" data-theme="light-mint">
+                        <span class="theme-dot" style="background-color: #20b2aa;"></span> Light Mint Green
+                    </button>
+                </div>
+            </main>
+        </div>
+
+        <div id="detail-view" class="view-section" style="display: none; z-index: 20;">
+            <header class="detail-header-compact">
+                <div class="header-top detail-top">
+                    <button id="back-btn" class="back-btn"><i class="fa-solid fa-chevron-left"></i> Kembali</button>
+                    <h1 id="current-list-title">Nama Daftar</h1>
+                    <button id="menu-trigger-btn" class="menu-trigger-btn" aria-label="Menu Opsi">
+                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                    </button>
+                </div>
+                
+                <div id="search-bar-container" class="search-bar-container" style="display: none;">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="search-items-input" placeholder="Cari nama barang di daftar ini..." autocomplete="off">
+                    <button id="close-search-btn" class="close-search-btn"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                
+                <div class="total-summary-compact">
+                    <div class="summary-card-compact">
+                        <span class="summary-label">Total Anggaran</span>
+                        <span id="total-price" class="summary-value">Rp 0</span>
+                    </div>
+                    <div class="summary-card-compact accent">
+                        <span class="summary-label">Sudah Dibeli</span>
+                        <span id="completed-price" class="summary-value">Rp 0</span>
+                    </div>
+                </div>
+            </header>
+
+            <main id="main-scroll" class="detail-main-compact">
+                <ul id="shopping-list">
+                    </ul>
+            </main>
+
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <select id="category-select">
+                        <option value="Umum">📦 Umum</option>
+                        <option value="Sayuran & Buah">🥬 Sayuran & Buah</option>
+                        <option value="Daging & Ikan">🥩 Daging & Ikan</option>
+                        <option value="Bumbu Dapur">🧂 Bumbu Dapur</option>
+                        <option value="Minuman">🥤 Minuman</option>
+                        <option value="Kebersihan">🧼 Kebersihan</option>
+                    </select>
+                    
+                    <div id="suggestions-container" class="suggestions-container"></div>
+                    
+                    <div class="input-row">
+                        <input type="text" id="item-input" placeholder="Nama barang..." autocomplete="off">
+                        <input type="number" id="price-input" placeholder="Harga (Rp)..." autocomplete="off" inputmode="numeric">
+                    </div>
+                </div>
+                <div class="action-buttons-col">
+                    <button id="mic-btn" class="mic-btn" aria-label="Input Suara">
+                        <i class="fa-solid fa-microphone"></i>
+                    </button>
+                    <button id="add-btn"><i class="fa-solid fa-plus"></i></button>
+                </div>
             </div>
         </div>
 
-        <nav id="main-navbar" class="nav-bar-container">
-            <div class="nav-item active" data-tab="dashboard">
-                <i class="fa-solid fa-house"></i>Dashboard
-            </div>
-            <div class="nav-item" data-tab="memo">
-                <i class="fa-solid fa-note-sticky"></i>Memo
-            </div>
-            <div class="nav-item" data-tab="theme">
-                <i class="fa-solid fa-palette"></i>Tema
-            </div>
+        <nav id="main-navbar" class="main-navbar">
+            <button class="nav-item active" data-tab="dashboard">
+                <i class="fa-solid fa-basket-shopping"></i>
+                <span>Daftar</span>
+            </button>
+            <button class="nav-item" data-tab="memo">
+                <i class="fa-solid fa-note-sticky"></i>
+                <span>Memo</span>
+            </button>
+            <button class="nav-item" data-tab="theme">
+                <i class="fa-solid fa-palette"></i>
+                <span>Tampilan</span>
+            </button>
         </nav>
 
-        <div id="sheet-overlay" class="sheet-overlay-panel"></div>
-        <div id="bottom-sheet" class="bottom-sheet-modal">
-            <div id="sheet-header" class="sheet-header-bar"></div>
-            <div class="sheet-menu-list">
-                <div id="opt-search" class="sheet-item"><i class="fa-solid fa-magnifying-glass"></i> Cari Barang</div>
-                <div id="opt-rename" class="sheet-item"><i class="fa-solid fa-pen-to-square"></i> Ubah Nama Daftar</div>
-                <div id="opt-share" class="sheet-item"><i class="fa-brands fa-whatsapp" style="color:#25d366;"></i> Kirim Ke WhatsApp</div>
-                <div id="opt-edit-checked-price" class="sheet-item"><i class="fa-solid fa-tags"></i> Atur Harga Item Tercentang</div>
-                <div id="opt-uncheck-all" class="sheet-item"><i class="fa-solid fa-rotate-left"></i> Kosongkan Semua Centang</div>
-                <div id="opt-check-all" class="sheet-item"><i class="fa-solid fa-check-double"></i> Centang Semua Barang</div>
-                <div id="opt-delete-all" class="sheet-item danger"><i class="fa-solid fa-dumpster"></i> Hapus Semua Isi Barang</div>
+        <div id="sheet-overlay" class="sheet-overlay"></div>
+        <div id="bottom-sheet" class="bottom-sheet">
+            <div class="sheet-header" id="sheet-header">
+                <div class="sheet-drag-handle"></div>
+            </div>
+            <div class="sheet-body">
+                <button class="sheet-item" id="opt-search">
+                    <i class="fa-solid fa-magnifying-glass"></i> Cari di dalam daftar
+                </button>
+                <button class="sheet-item" id="opt-rename">
+                    <i class="fa-solid fa-pen-to-square"></i> Ganti nama daftar
+                </button>
+                <button class="sheet-item" id="opt-share">
+                    <i class="fa-brands fa-whatsapp"></i> Bagikan daftar via WA
+                </button>
+                <button class="sheet-item" id="opt-edit-checked-price">
+                    <i class="fa-solid fa-tags"></i> Edit harga item dicentang
+                </button>
+                <button class="sheet-item" id="opt-uncheck-all">
+                    <i class="fa-regular fa-square"></i> Batalkan centang semua item
+                </button>
+                <button class="sheet-item" id="opt-check-all">
+                    <i class="fa-regular fa-square-check"></i> Centang semua item
+                </button>
+                <hr class="sheet-divider">
+                <button class="sheet-item danger" id="opt-delete-all">
+                    <i class="fa-solid fa-trash-can"></i> Hapus semua item
+                </button>
+
+                <div class="author-section">
+                    <p class="author-text">Dibuat Oleh Sulfikar</p>
+                    <div class="social-links">
+                        <a href="https://facebook.com/zullqq" target="_blank" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                        <a href="https://www.instagram.com/sulfar._/" target="_blank" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="https://t.me/idperfectworld" target="_blank" aria-label="Telegram"><i class="fa-brands fa-telegram"></i></a>
+                    </div>
+                </div>
             </div>
         </div>
 
     </div>
-
+    
     <script src="script.js"></script>
 </body>
 </html>

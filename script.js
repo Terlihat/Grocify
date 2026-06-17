@@ -51,10 +51,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const categories = ["Umum", "Sayuran & Buah", "Daging & Ikan", "Bumbu Dapur", "Minuman", "Kebersihan"];
 
-    // Map Palet Warna Tema
+    // Map Palet Warna Tema (Dark & Light)
     const themeColors = {
-        'default': '#20b2aa',       // Default: Light Mint Green (Terang)
-        'dark-neon': '#00e676',     // Neon Green (Gelap)
+        'default': '#00e676',
         'ocean': '#00b0ff',
         'sapphire': '#2979ff',
         'lavender': '#b400ff',
@@ -63,7 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
         'rosegold': '#e5a9a9',
         'light-nordic': '#5b7c99',
         'light-citrus': '#ff9800',
-        'light-cotton': '#f48fb1'
+        'light-cotton': '#f48fb1',
+        'light-mint': '#20b2aa'
     };
 
     // --- State Management ---
@@ -79,12 +79,18 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.style.setProperty('--primary-color', color);
         localStorage.setItem('grocify_theme', themeName);
         
-        // Aturan: Aktifkan kelas 'light-theme' jika tema default atau berawalan 'light-'
-        const isLight = themeName.startsWith('light-') || themeName === 'default';
-        document.body.classList.toggle('light-theme', isLight);
+        if(themeName.startsWith('light-')) {
+            document.body.classList.add('light-theme');
+        } else {
+            document.body.classList.remove('light-theme');
+        }
         
         document.querySelectorAll('.theme-tile').forEach(tile => {
-            tile.classList.toggle('active', tile.getAttribute('data-theme') === themeName);
+            if(tile.getAttribute('data-theme') === themeName) {
+                tile.classList.add('active');
+            } else {
+                tile.classList.remove('active');
+            }
         });
     };
     
@@ -104,8 +110,9 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('grocify_memo', e.target.value);
     });
 
-    // --- ENGINES: NAVBAR NAVIGATION SWITCHER ---
+    // --- ENGINES: NAVBAR NAVIGATION SWITCHER (DIOPTIMALKAN TANPA BLOCKING) ---
     const switchTab = (tabName, isPopStateTriggered = false) => {
+        // Logika pushState hanya berjalan jika tab benar-benar berubah lewat klik manual
         if (!isPopStateTriggered && currentActiveTab !== tabName) {
             if (tabName !== 'dashboard') {
                 if (currentActiveTab === 'dashboard') {
@@ -118,9 +125,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         currentActiveTab = tabName;
         navItems.forEach(item => {
-            item.classList.toggle('active', item.getAttribute('data-tab') === tabName);
+            if(item.getAttribute('data-tab') === tabName) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
         });
 
+        // Selalu pastikan display disinkronkan tanpa interupsi 'return early'
         dashboardView.style.display = (tabName === 'dashboard') ? 'flex' : 'none';
         memoView.style.display = (tabName === 'memo') ? 'flex' : 'none';
         themeView.style.display = (tabName === 'theme') ? 'flex' : 'none';
@@ -168,7 +180,6 @@ document.addEventListener('DOMContentLoaded', () => {
         listsContainer.innerHTML = '';
         if(appData.length === 0) {
             listsContainer.innerHTML = `<p style="text-align:center; color: var(--text-secondary); margin-top: 40px; font-size: 14px;">Belum ada daftar belanja. Buat satu di atas!</p>`;
-            return;
         }
 
         appData.forEach(list => {
@@ -209,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Diikat ke objek window agar onclick inline HTML tetap berfungsi
+    // FUNGSI INI HARUS BERADA DI RUANG LINGKUP GLOBAL UNTUK BISA DIPANGGIL DARI HTML ONCLICK
     window.deleteList = (id) => {
         if(confirm("Yakin ingin menghapus daftar ini secara permanen?")) {
             appData = appData.filter(list => list.id !== id);
@@ -218,11 +229,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- NAVIGATION MANAGEMENT ---
+    // --- MANAGEMENT NAVIGASI HALAMAN DETAIL ---
     window.openList = (id) => {
         currentListId = id;
         const currentList = appData.find(l => l.id === id);
-        if (!currentList) return;
+        if (!currentList) return; // Proteksi tambahan
 
         currentListTitle.textContent = currentList.name;
         
@@ -240,10 +251,12 @@ document.addEventListener('DOMContentLoaded', () => {
         window.history.pushState({ view: 'detail_page' }, '');
     };
 
+    // PERBAIKAN UTAMA: Fungsi menutup Detail View & mencegah Blank Screen
     const closeDetailView = (isPopStateTriggered = false) => {
         currentListId = null;
         detailView.style.display = 'none';
         
+        // Kembalikan visibilitas berdasarkan tab terakhir yang aktif
         dashboardView.style.display = (currentActiveTab === 'dashboard') ? 'flex' : 'none';
         memoView.style.display = (currentActiveTab === 'memo') ? 'flex' : 'none';
         themeView.style.display = (currentActiveTab === 'theme') ? 'flex' : 'none';
@@ -251,17 +264,20 @@ document.addEventListener('DOMContentLoaded', () => {
         mainNavbar.style.display = 'flex';
         
         if (!isPopStateTriggered) {
-            window.history.back();
+            window.history.back(); // Panggil fungsi mundur browser jika bukan dari tombol hardware back
         }
         renderDashboard();
     };
 
     backBtn.addEventListener('click', () => closeDetailView(false));
 
+    // EVENT LISTENER: Tombol Back Hardwere Smartphone Ditekan
     window.addEventListener('popstate', (event) => {
         if (detailView.style.display === 'flex') {
+            // Jika sedang buka daftar barang, tutup daftar barang
             closeDetailView(true);
         } else {
+            // Memulihkan tab yang sesuai state, default kembali ke Dashboard
             if (event.state && event.state.tab) {
                 switchTab(event.state.tab, true);
             } else {
@@ -396,6 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    // FUNGSI-FUNGSI GLOBAL UNTUK ONCLICK DI HTML
     window.changeQty = (index, change) => {
         const currentList = appData.find(l => l.id === currentListId);
         if(!currentList || !currentList.items[index]) return;

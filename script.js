@@ -51,10 +51,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const categories = ["Umum", "Sayuran & Buah", "Daging & Ikan", "Bumbu Dapur", "Minuman", "Kebersihan"];
 
-    // Map Palet Warna Tema (Diperbarui)
+    // Map Palet Warna Tema
     const themeColors = {
-        'default': '#20b2aa',       // SEKARANG DEFAULT: Light Mint Green (Terang)
-        'dark-neon': '#00e676',     // TEMA LAMA: Disimpan dengan nama "Neon Green" (Gelap)
+        'default': '#20b2aa',       // Default: Light Mint Green (Terang)
+        'dark-neon': '#00e676',     // Neon Green (Gelap)
         'ocean': '#00b0ff',
         'sapphire': '#2979ff',
         'lavender': '#b400ff',
@@ -79,19 +79,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.style.setProperty('--primary-color', color);
         localStorage.setItem('grocify_theme', themeName);
         
-        // Aturan: Jika tema default ATAU diawali 'light-', aktifkan kelas 'light-theme'
-        if(themeName.startsWith('light-') || themeName === 'default') {
-            document.body.classList.add('light-theme');
-        } else {
-            document.body.classList.remove('light-theme');
-        }
+        // Aturan: Aktifkan kelas 'light-theme' jika tema default atau berawalan 'light-'
+        const isLight = themeName.startsWith('light-') || themeName === 'default';
+        document.body.classList.toggle('light-theme', isLight);
         
         document.querySelectorAll('.theme-tile').forEach(tile => {
-            if(tile.getAttribute('data-theme') === themeName) {
-                tile.classList.add('active');
-            } else {
-                tile.classList.remove('active');
-            }
+            tile.classList.toggle('active', tile.getAttribute('data-theme') === themeName);
         });
     };
     
@@ -125,11 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         currentActiveTab = tabName;
         navItems.forEach(item => {
-            if(item.getAttribute('data-tab') === tabName) {
-                item.classList.add('active');
-            } else {
-                item.classList.remove('active');
-            }
+            item.classList.toggle('active', item.getAttribute('data-tab') === tabName);
         });
 
         dashboardView.style.display = (tabName === 'dashboard') ? 'flex' : 'none';
@@ -179,6 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
         listsContainer.innerHTML = '';
         if(appData.length === 0) {
             listsContainer.innerHTML = `<p style="text-align:center; color: var(--text-secondary); margin-top: 40px; font-size: 14px;">Belum ada daftar belanja. Buat satu di atas!</p>`;
+            return;
         }
 
         appData.forEach(list => {
@@ -219,6 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Diikat ke objek window agar onclick inline HTML tetap berfungsi
     window.deleteList = (id) => {
         if(confirm("Yakin ingin menghapus daftar ini secara permanen?")) {
             appData = appData.filter(list => list.id !== id);
@@ -231,6 +222,8 @@ document.addEventListener('DOMContentLoaded', () => {
     window.openList = (id) => {
         currentListId = id;
         const currentList = appData.find(l => l.id === id);
+        if (!currentList) return;
+
         currentListTitle.textContent = currentList.name;
         
         filterQuery = "";
@@ -334,6 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
         totalPriceEl.textContent = formatRupiah(totalAnggaran);
         completedPriceEl.textContent = formatRupiah(totalDibeli);
 
+        // Map data dengan menyertakan indeks asli array agar aksi tidak salah sasaran saat ada filter pencarian
         const itemsWithIndex = currentList.items.map((item, index) => ({
             ...item,
             price: parseInt(item.price) || 0,
@@ -404,7 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.changeQty = (index, change) => {
         const currentList = appData.find(l => l.id === currentListId);
-        if(!currentList) return;
+        if(!currentList || !currentList.items[index]) return;
         let currentQty = parseInt(currentList.items[index].qty) || 1;
         currentQty += change;
         if(currentQty < 1) currentQty = 1;
@@ -415,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.changeUnit = (index, value) => {
         const currentList = appData.find(l => l.id === currentListId);
-        if(!currentList) return;
+        if(!currentList || !currentList.items[index]) return;
         currentList.items[index].unit = value;
         saveAppData();
         renderDetailList();
@@ -443,6 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.toggleComplete = (index) => {
         const currentList = appData.find(l => l.id === currentListId);
+        if(!currentList || !currentList.items[index]) return;
         currentList.items[index].completed = !currentList.items[index].completed;
         saveAppData();
         renderDetailList();
@@ -450,6 +445,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.deleteItem = (index) => {
         const currentList = appData.find(l => l.id === currentListId);
+        if(!currentList || !currentList.items[index]) return;
         currentList.items.splice(index, 1);
         saveAppData();
         renderDetailList();
@@ -528,6 +524,7 @@ document.addEventListener('DOMContentLoaded', () => {
     optRename.addEventListener('click', () => {
         closeBottomSheet();
         const currentList = appData.find(l => l.id === currentListId);
+        if(!currentList) return;
         const newName = prompt("Masukkan nama baru untuk daftar ini:", currentList.name);
         if (newName && newName.trim() !== "") {
             currentList.name = newName.trim();
@@ -568,6 +565,7 @@ document.addEventListener('DOMContentLoaded', () => {
     optUncheckAll.addEventListener('click', () => {
         closeBottomSheet();
         const currentList = appData.find(l => l.id === currentListId);
+        if(!currentList) return;
         currentList.items.forEach(item => item.completed = false);
         saveAppData();
         renderDetailList();
@@ -576,6 +574,7 @@ document.addEventListener('DOMContentLoaded', () => {
     optCheckAll.addEventListener('click', () => {
         closeBottomSheet();
         const currentList = appData.find(l => l.id === currentListId);
+        if(!currentList) return;
         currentList.items.forEach(item => item.completed = true);
         saveAppData();
         renderDetailList();
@@ -585,6 +584,7 @@ document.addEventListener('DOMContentLoaded', () => {
         closeBottomSheet();
         if(confirm("Apakah Anda yakin ingin menghapus seluruh barang di daftar ini?")) {
             const currentList = appData.find(l => l.id === currentListId);
+            if(!currentList) return;
             currentList.items = [];
             saveAppData();
             renderDetailList();

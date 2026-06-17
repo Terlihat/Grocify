@@ -51,9 +51,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const categories = ["Umum", "Sayuran & Buah", "Daging & Ikan", "Bumbu Dapur", "Minuman", "Kebersihan"];
 
-    // Map Palet Warna Tema (Dark & Light)
+    // Map Palet Warna Tema (Diperbarui)
     const themeColors = {
-        'default': '#00e676',
+        'default': '#20b2aa',       // SEKARANG DEFAULT: Light Mint Green (Terang)
+        'dark-neon': '#00e676',     // TEMA LAMA: Disimpan dengan nama "Neon Green" (Gelap)
         'ocean': '#00b0ff',
         'sapphire': '#2979ff',
         'lavender': '#b400ff',
@@ -62,8 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'rosegold': '#e5a9a9',
         'light-nordic': '#5b7c99',
         'light-citrus': '#ff9800',
-        'light-cotton': '#f48fb1',
-        'light-mint': '#20b2aa'
+        'light-cotton': '#f48fb1'
     };
 
     // --- State Management ---
@@ -79,7 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.style.setProperty('--primary-color', color);
         localStorage.setItem('grocify_theme', themeName);
         
-        if(themeName.startsWith('light-')) {
+        // Aturan: Jika tema default ATAU diawali 'light-', aktifkan kelas 'light-theme'
+        if(themeName.startsWith('light-') || themeName === 'default') {
             document.body.classList.add('light-theme');
         } else {
             document.body.classList.remove('light-theme');
@@ -110,9 +111,8 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('grocify_memo', e.target.value);
     });
 
-    // --- ENGINES: NAVBAR NAVIGATION SWITCHER (DIOPTIMALKAN TANPA BLOCKING) ---
+    // --- ENGINES: NAVBAR NAVIGATION SWITCHER ---
     const switchTab = (tabName, isPopStateTriggered = false) => {
-        // Logika pushState hanya berjalan jika tab benar-benar berubah lewat klik manual
         if (!isPopStateTriggered && currentActiveTab !== tabName) {
             if (tabName !== 'dashboard') {
                 if (currentActiveTab === 'dashboard') {
@@ -132,7 +132,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Selalu pastikan display disinkronkan tanpa interupsi 'return early'
         dashboardView.style.display = (tabName === 'dashboard') ? 'flex' : 'none';
         memoView.style.display = (tabName === 'memo') ? 'flex' : 'none';
         themeView.style.display = (tabName === 'theme') ? 'flex' : 'none';
@@ -228,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- MANAGEMENT NAVIGASI HALAMAN DETAIL ---
+    // --- NAVIGATION MANAGEMENT ---
     window.openList = (id) => {
         currentListId = id;
         const currentList = appData.find(l => l.id === id);
@@ -252,7 +251,6 @@ document.addEventListener('DOMContentLoaded', () => {
         currentListId = null;
         detailView.style.display = 'none';
         
-        // Memaksa UI utama menampilkan tab yang aktif kembali (Mencegah Blank Screen)
         dashboardView.style.display = (currentActiveTab === 'dashboard') ? 'flex' : 'none';
         memoView.style.display = (currentActiveTab === 'memo') ? 'flex' : 'none';
         themeView.style.display = (currentActiveTab === 'theme') ? 'flex' : 'none';
@@ -267,12 +265,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     backBtn.addEventListener('click', () => closeDetailView(false));
 
-    // EVENT LISTENER: Tombol Back Hardwere Smartphone Ditekan
     window.addEventListener('popstate', (event) => {
         if (detailView.style.display === 'flex') {
             closeDetailView(true);
         } else {
-            // Memulihkan tab yang sesuai state, default kembali ke Dashboard
             if (event.state && event.state.tab) {
                 switchTab(event.state.tab, true);
             } else {
@@ -459,7 +455,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderDetailList();
     };
 
-    // --- LOGIKA BOTTOM SHEET TOUCH DRAG GESTURES ---
+    // --- LOGIKA BOTTOM SHEET MENU ---
     const openBottomSheet = () => {
         sheetOverlay.classList.add('show');
         bottomSheet.classList.add('show');
@@ -510,7 +506,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- ACTIONS DI DALAM BOTTOM SHEET MENU ---
+    // --- ACTIONS DI DALAM BOTTOM SHEET ---
     optSearch.addEventListener('click', () => {
         closeBottomSheet();
         searchBarContainer.style.display = 'flex';
@@ -616,7 +612,7 @@ document.addEventListener('DOMContentLoaded', () => {
     priceInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addItem(); });
     newListInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') createListBtn.click(); });
 
-    // --- MIC SPEECH ENGINE (WITH AUTO CAPITALIZE) ---
+    // --- MIC SPEECH ENGINE ---
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition && micBtn) {
         const recognition = new SpeechRecognition();
@@ -647,9 +643,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderDashboard();
 });
-
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch((error) => console.log('ServiceWorker gagal:', error));
-    });
-}
